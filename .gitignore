@@ -25,3 +25,6 @@ pnpm-debug.log*
 
 # source material (LinkedIn export), kept local
 docs/
+
+# wrangler
+.wrangler/
