@@ -1,5 +1,6 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import StackList from '../components/StackList.astro';
 import { site } from '../data/site';
 import { getProjects } from '../lib/projects';
 import { absoluteUrl, breadcrumbSchema, graph, personId, personSchema } from '../lib/seo';
@@ -59,7 +60,7 @@ const jsonLd = graph(
 						</a>
 					</h2>
 					<p class="justify">{data.summary}</p>
-					{data.stack.length > 0 && <p class="stack muted">{data.stack.join(' · ')}</p>}
+					{data.stack.length > 0 && <StackList stack={data.stack} />}
 					<p class="links">
 						<a class="more-link" href={data.repo} target="_blank" rel="noopener noreferrer">
 							repository ↗
@@ -109,10 +110,6 @@ const jsonLd = graph(
 
 	li p {
 		margin: 0.5rem 0;
-	}
-
-	.stack {
-		font-size: 0.875rem;
 	}
 
 	.links {
