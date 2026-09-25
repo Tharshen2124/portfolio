@@ -1,5 +1,5 @@
 import { defineCollection } from 'astro:content';
-import { glob } from 'astro/loaders';
+import { file, glob } from 'astro/loaders';
 import { z } from 'astro/zod';
 
 const experience = defineCollection({
@@ -20,4 +20,20 @@ const experience = defineCollection({
 	}),
 });
 
-export const collections = { experience };
+const projects = defineCollection({
+	loader: file('./src/content/projects.yaml'),
+	schema: z.object({
+		/** Position on the projects page, matching the GitHub pinned order. */
+		order: z.number(),
+		name: z.string(),
+		/** One or two sentences; the repository has the rest. */
+		summary: z.string(),
+		stack: z.array(z.string()).default([]),
+		repo: z.url(),
+		site: z.url().optional(),
+		/** Internal path to a related experience write-up. */
+		writeup: z.string().optional(),
+	}),
+});
+
+export const collections = { experience, projects };

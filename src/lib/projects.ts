@@ -1,0 +1,9 @@
+import { getCollection, type CollectionEntry } from 'astro:content';
+
+export type Project = CollectionEntry<'projects'>;
+
+/** All projects, in the order set in src/content/projects.yaml. */
+export async function getProjects(): Promise<Project[]> {
+	const entries = await getCollection('projects');
+	return entries.sort((a, b) => a.data.order - b.data.order);
+}

@@ -3,11 +3,13 @@ import { site } from '../data/site';
 import { getExperience, hasWriteup } from '../lib/experience';
 import { formatDay, formatRange } from '../lib/format';
 import { getSubstackFeed } from '../lib/substack';
+import { getProjects } from '../lib/projects';
 import { absoluteUrl } from '../lib/seo';
 
 /** Site overview for LLMs, following https://llmstxt.org. */
 export const GET: APIRoute = async () => {
 	const experience = (await getExperience()).filter(hasWriteup);
+	const projects = await getProjects();
 	const { posts } = await getSubstackFeed();
 
 	const body = [
@@ -26,6 +28,13 @@ export const GET: APIRoute = async () => {
 				`- [${entry.data.title}](${absoluteUrl(`/experience/${entry.id}.md`)}): ${entry.data.role}, ${entry.data.organization} (${formatRange(entry.data.startDate, entry.data.endDate)}). ${entry.data.summary}`,
 		),
 		'',
+		'## Projects',
+		'',
+		...projects.map(
+			({ data }) =>
+				`- [${data.name}](${data.repo}): ${data.summary.replace(/\s+/g, ' ')} Stack: ${data.stack.join(', ')}.`,
+		),
+		'',
 		'## Writing',
 		'',
 		...(posts.length > 0
@@ -36,6 +45,7 @@ export const GET: APIRoute = async () => {
 		'',
 		`- [Home](${absoluteUrl('/')})`,
 		`- [All experience](${absoluteUrl('/experience')})`,
+		`- [All projects](${absoluteUrl('/projects')})`,
 		`- [GitHub](${site.links.github})`,
 		`- [LinkedIn](${site.links.linkedin})`,
 		`- [Substack](${site.links.substack})`,

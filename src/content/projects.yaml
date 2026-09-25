@@ -1,0 +1,47 @@
+# Pinned GitHub repositories. `order` matches the pinned order on GitHub.
+- id: observability-victoriametrics
+  order: 1
+  name: Observability stack with VictoriaMetrics
+  summary: >-
+    A learning project for a full observability pipeline. A Go app instrumented with
+    OpenTelemetry sends metrics, logs and traces through the OpenTelemetry Collector into
+    VictoriaMetrics, VictoriaLogs and VictoriaTraces, with Grafana on top. Logs are also
+    archived to S3, provisioned with Terraform.
+  stack: [Go, OpenTelemetry, VictoriaMetrics, Grafana, Terraform, AWS S3, Docker]
+  repo: https://github.com/Tharshen2124/Observability-Project-Utilizing-VictoriaMetrics
+
+- id: show-and-tell-tracker
+  order: 2
+  name: Show&Tell tracker for Malaysian AI
+  summary: >-
+    A tracker for the Malaysian AI weekly Show & Tell. It records members, meetups,
+    projects and every talk, and highlights which projects are still moving and who has
+    gone quiet. On the night, it runs the room with a QR code to join the presenting
+    order and a projected timer for each talk.
+  stack: [Next.js, Convex, Clerk, Tailwind CSS]
+  repo: https://github.com/Tharshen2124/malaysian-ai-show-and-tell-tracker
+  site: https://show-and-tell-tracker.vercel.app
+
+- id: hackerspace-ecosystem
+  order: 3
+  name: Hackerspace Ecosystem
+  summary: >-
+    The rebuild of Hacktrack, the system Hackerspace MMU has used for 15 years to track
+    members, projects and meetups. An API layer over the original Rails app, a Next.js
+    committee dashboard, an automated registration pipeline and a Discord bot, all
+    running at zero cost. This repo is the dashboard.
+  stack: [Next.js, TypeScript, Ruby on Rails, Google Apps Script]
+  repo: https://github.com/hackerspacemmu/hacktrackmmu-v2-frontend
+  site: https://hacktrackmmuv2.vercel.app
+  writeup: /experience/hackerspace-ecosystem
+
+- id: k8s-platform-lab
+  order: 4
+  name: Kubernetes platform lab
+  summary: >-
+    A small Go web app that makes Kubernetes behaviour visible in the browser. It can
+    fail its own health checks, burn CPU and memory on demand, and shows which pod and
+    node answered. Around it is a platform layer with Envoy Gateway for ingress,
+    cert-manager for TLS and Argo CD for GitOps.
+  stack: [Go, Kubernetes, Envoy Gateway, cert-manager, Argo CD, HTMX]
+  repo: https://github.com/Tharshen2124/k8s-platform-lab

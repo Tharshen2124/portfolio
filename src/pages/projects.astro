@@ -1,0 +1,127 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { site } from '../data/site';
+import { getProjects } from '../lib/projects';
+import { absoluteUrl, breadcrumbSchema, graph, personId, personSchema } from '../lib/seo';
+
+const projects = await getProjects();
+
+const description =
+	"Tharshen's projects: observability with VictoriaMetrics and OpenTelemetry, a Kubernetes platform lab, and community tools.";
+const jsonLd = graph(
+	{
+		'@type': 'CollectionPage',
+		url: absoluteUrl('/projects'),
+		name: 'Projects',
+		description,
+		author: { '@id': personId },
+		mainEntity: {
+			'@type': 'ItemList',
+			itemListElement: projects.map(({ data }, i) => ({
+				'@type': 'ListItem',
+				position: i + 1,
+				item: {
+					'@type': 'SoftwareSourceCode',
+					name: data.name,
+					description: data.summary,
+					codeRepository: data.repo,
+					...(data.site && { url: data.site }),
+					keywords: data.stack.join(', '),
+					author: { '@id': personId },
+				},
+			})),
+		},
+	},
+	personSchema(),
+	breadcrumbSchema([
+		{ name: 'Home', path: '/' },
+		{ name: 'Projects', path: '/projects' },
+	]),
+);
+---
+
+<Layout title="Projects" description={description} jsonLd={jsonLd}>
+	<h1 class="page-title">Projects</h1>
+	<p class="lede">
+		Things I've built, mostly to learn DevOps, SRE and observability by doing. The details live in
+		each repository, and there's more on <a href={site.links.github} target="_blank"
+			rel="noopener noreferrer">my GitHub</a
+		>.
+	</p>
+
+	<ul class="projects">
+		{
+			projects.map(({ data }) => (
+				<li>
+					<h2 class="project-name">
+						<a href={data.repo} target="_blank" rel="noopener noreferrer">
+							{data.name}
+						</a>
+					</h2>
+					<p class="justify">{data.summary}</p>
+					{data.stack.length > 0 && <p class="stack muted">{data.stack.join(' · ')}</p>}
+					<p class="links">
+						<a class="more-link" href={data.repo} target="_blank" rel="noopener noreferrer">
+							repository ↗
+						</a>
+						{data.site && (
+							<a class="more-link" href={data.site} target="_blank" rel="noopener noreferrer">
+								live site ↗
+							</a>
+						)}
+						{data.writeup && (
+							<a class="more-link" href={data.writeup}>
+								write-up →
+							</a>
+						)}
+					</p>
+				</li>
+			))
+		}
+	</ul>
+</Layout>
+
+<style>
+	.projects {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+	}
+
+	li + li {
+		margin-top: 2.25rem;
+	}
+
+	.project-name {
+		font-size: 1.1875rem;
+		letter-spacing: -0.01em;
+		margin: 0 0 0.5rem;
+	}
+
+	.project-name a {
+		text-decoration: none;
+	}
+
+	.project-name a:hover {
+		text-decoration: underline;
+		text-underline-offset: 3px;
+	}
+
+	li p {
+		margin: 0.5rem 0;
+	}
+
+	.stack {
+		font-size: 0.875rem;
+	}
+
+	.links {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0 1.25rem;
+	}
+
+	.links .more-link {
+		margin-top: 0;
+	}
+</style>

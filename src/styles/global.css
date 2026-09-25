@@ -88,6 +88,14 @@ h3 {
 	margin: 0 0 2rem;
 }
 
+/* Justified body copy; hyphenation keeps the narrow column from getting gappy. */
+.lede,
+.prose p,
+.justify {
+	text-align: justify;
+	hyphens: auto;
+}
+
 .lede a,
 .prose a {
 	text-decoration: underline;
