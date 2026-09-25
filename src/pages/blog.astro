@@ -1,0 +1,54 @@
+---
+import Layout from '../layouts/Layout.astro';
+import EntryList from '../components/EntryList.astro';
+import { site } from '../data/site';
+import { getSubstackFeed } from '../lib/substack';
+import { formatDay } from '../lib/format';
+
+const { description, posts } = await getSubstackFeed();
+const blurb = (description ?? 'Writing about Site Reliability, Observability and DevOps').replace(/\.?$/, '.');
+const entries = posts.map((post) => ({
+	date: formatDay(post.date),
+	title: post.title,
+	href: post.url,
+}));
+---
+
+<Layout title="Blog" description="Tharshen's writing on Site Reliability, Observability and DevOps.">
+	<h1 class="page-title">My Blog</h1>
+	<p class="lede">
+		{blurb} Posts live on <a href={site.substackUrl} target="_blank" rel="noopener noreferrer"
+			>Substack</a
+		>.
+	</p>
+
+	{
+		entries.length > 0 ? (
+			<EntryList entries={entries} />
+		) : (
+			<a class="more-link" href={site.substackUrl} target="_blank" rel="noopener noreferrer">
+				Read on Substack ↗
+			</a>
+		)
+	}
+
+	<h2 class="section-title">Subscribe</h2>
+	<iframe
+		class="substack-embed"
+		src={`${site.substackUrl}/embed`}
+		title="Subscribe to Tharshen on Substack"
+		loading="lazy"
+		scrolling="no"></iframe>
+</Layout>
+
+<style>
+	.substack-embed {
+		display: block;
+		width: 100%;
+		max-width: 30rem;
+		height: 320px;
+		border: 1px solid var(--border);
+		border-radius: 0.5rem;
+		background: #fff;
+	}
+</style>

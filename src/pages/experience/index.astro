@@ -1,0 +1,38 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import EntryList from '../../components/EntryList.astro';
+import { categories, getExperience, experienceHref } from '../../lib/experience';
+import { formatMonth } from '../../lib/format';
+
+const experience = await getExperience();
+
+const sections = categories.map(({ id, label }) => ({
+	label,
+	entries: experience
+		.filter((entry) => entry.data.category === id)
+		.map((entry) => ({
+			date: formatMonth(entry.data.startDate),
+			title: `${entry.data.role}, ${entry.data.organization}`,
+			href: experienceHref(entry),
+		})),
+}));
+---
+
+<Layout
+	title="Experience"
+	description="Write-ups of Tharshen's work, university and volunteer experience."
+>
+	<h1 class="page-title">Experience</h1>
+	<p class="lede">
+		What I've worked on, the roles I've held at university, and the events I've volunteered for.
+	</p>
+
+	{
+		sections.map(({ label, entries }) => (
+			<section>
+				<h2 class="section-title">{label}</h2>
+				<EntryList entries={entries} />
+			</section>
+		))
+	}
+</Layout>

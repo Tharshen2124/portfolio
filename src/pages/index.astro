@@ -1,11 +1,92 @@
 ---
-import Welcome from '../components/Welcome.astro';
+import { Image } from 'astro:assets';
 import Layout from '../layouts/Layout.astro';
+import EntryList from '../components/EntryList.astro';
+import { site } from '../data/site';
+import { getExperience, experienceHref } from '../lib/experience';
+import { getSubstackFeed } from '../lib/substack';
+import { formatDay, formatMonth } from '../lib/format';
+import portrait from '../assets/tharshen-avatar.jpg';
 
-// Welcome to Astro! Wondering what to do next? Check out the Astro documentation at https://docs.astro.build
-// Don't want to use any of this? Delete everything in this file, the `assets`, `components`, and `layouts` directories, and start fresh.
+const experience = (await getExperience())
+	.filter((entry) => experienceHref(entry))
+	.slice(0, 5)
+	.map((entry) => ({
+		date: formatMonth(entry.data.startDate),
+		title: entry.data.title,
+		href: experienceHref(entry),
+	}));
+
+const { posts } = await getSubstackFeed();
+const writing = posts.slice(0, 3).map((post) => ({
+	date: formatDay(post.date),
+	title: post.title,
+	href: post.url,
+}));
 ---
 
 <Layout>
-	<Welcome />
+	<header class="intro">
+		<Image
+			class="portrait"
+			src={portrait}
+			alt={`Portrait of ${site.name}`}
+			width={96}
+			height={96}
+			densities={[1, 2]}
+			fit="cover"
+			loading="eager"
+		/>
+		<h1 class="page-title">{site.name}</h1>
+	</header>
+	<p class="lede">
+		I'm a Computer Science student at Multimedia University working towards DevOps and Site
+		Reliability Engineering roles. I've interned as a full stack engineer at <a
+			href="/experience/ifast-global-hub-ai">iFAST Global Hub AI</a
+		> and as a web engineer at <a href="/experience/moneylion">MoneyLion</a>. Outside of work, I've
+		spent most of my time at university building communities: I was President of <a
+			href="/experience/it-society-president">IT Society</a
+		> and <a href="/experience/hackerspace-mmu-president">Hackerspace MMU</a>, and directed <a
+			href="/experience/barcamp-cyberjaya-2024">BarCamp Cyberjaya</a
+		>. These days I'm learning observability with OpenTelemetry and the VictoriaMetrics stack, and
+		writing about what I learn on <a href="/blog">my blog</a>.
+	</p>
+
+	<h2 class="section-title">Experience</h2>
+	<EntryList entries={experience} />
+	<a class="more-link" href="/experience">all experience →</a>
+
+	{
+		writing.length > 0 && (
+			<>
+				<h2 class="section-title">Writing</h2>
+				<EntryList entries={writing} />
+				<a class="more-link" href="/blog">
+					all posts →
+				</a>
+			</>
+		)
+	}
 </Layout>
+
+<style>
+	.intro {
+		display: flex;
+		align-items: center;
+		gap: 1.25rem;
+		margin-bottom: 2rem;
+	}
+
+	.intro .page-title {
+		margin: 0;
+	}
+
+	.portrait {
+		flex: 0 0 auto;
+		width: 6rem;
+		height: 6rem;
+		border-radius: 0.75rem;
+		object-fit: cover;
+		filter: grayscale(1);
+	}
+</style>

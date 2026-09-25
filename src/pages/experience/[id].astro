@@ -1,0 +1,59 @@
+---
+import type { GetStaticPaths } from 'astro';
+import { render } from 'astro:content';
+import Layout from '../../layouts/Layout.astro';
+import { getExperience, hasWriteup, type Experience } from '../../lib/experience';
+import { formatRange } from '../../lib/format';
+
+export const getStaticPaths = (async () => {
+	const entries = await getExperience();
+	return entries.filter(hasWriteup).map((entry) => ({
+		params: { id: entry.id },
+		props: { entry },
+	}));
+}) satisfies GetStaticPaths;
+
+interface Props {
+	entry: Experience;
+}
+
+const { entry } = Astro.props;
+const { title, role, organization, startDate, endDate, location, summary, skills, links } =
+	entry.data;
+const { Content } = await render(entry);
+
+const meta = [`${role}, ${organization}`, formatRange(startDate, endDate), location].filter(Boolean);
+---
+
+<Layout title={title} description={summary}>
+	<article>
+		<h1 class="article-title">{title}</h1>
+		<p class="article-meta">{meta.join(' · ')}</p>
+
+		<div class="prose">
+			<Content />
+		</div>
+
+		<footer class="article-footer">
+			{
+				skills.length > 0 && (
+					<p>
+						<span class="muted">Skills:</span> {skills.join(', ')}
+					</p>
+				)
+			}
+			{
+				links.map(({ label, url }) => (
+					<p>
+						<a class="more-link" href={url} target="_blank" rel="noopener noreferrer">
+							{label} ↗
+						</a>
+					</p>
+				))
+			}
+			<p>
+				<a class="more-link" href="/experience">← back to experience</a>
+			</p>
+		</footer>
+	</article>
+</Layout>

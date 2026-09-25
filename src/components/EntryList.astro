@@ -1,0 +1,84 @@
+---
+export interface Entry {
+	date: string;
+	title: string;
+	href?: string;
+}
+
+interface Props {
+	entries: Entry[];
+}
+
+const { entries } = Astro.props;
+const isExternal = (href: string) => /^https?:\/\//.test(href);
+---
+
+<ul class="entries">
+	{
+		entries.map(({ date, title, href }) => (
+			<li>
+				<span class="date">{date}</span>
+				{href ? (
+					<a
+						class="title"
+						href={href}
+						{...(isExternal(href) && { target: '_blank', rel: 'noopener noreferrer' })}
+					>
+						{title}
+					</a>
+				) : (
+					<span class="title plain">{title}</span>
+				)}
+			</li>
+		))
+	}
+</ul>
+
+<style>
+	/* Date column sizes to the widest date in the list, like the design. */
+	.entries {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+		display: grid;
+		grid-template-columns: max-content 1fr;
+		column-gap: 1rem;
+		row-gap: 1rem;
+	}
+
+	li {
+		display: grid;
+		grid-template-columns: subgrid;
+		grid-column: span 2;
+	}
+
+	.date {
+		color: var(--muted);
+	}
+
+	.title {
+		color: var(--fg-strong);
+		text-decoration: none;
+	}
+
+	a.title:hover {
+		text-decoration: underline;
+		text-underline-offset: 3px;
+	}
+
+	.title.plain {
+		color: var(--fg);
+	}
+
+	@media (max-width: 639px) {
+		.entries {
+			grid-template-columns: 1fr;
+		}
+
+		li {
+			grid-template-columns: 1fr;
+			grid-column: auto;
+			row-gap: 0.125rem;
+		}
+	}
+</style>
