@@ -1,11 +1,13 @@
 ---
+import { pagePath } from '../lib/seo';
+
 const links = [
 	{ href: '/', label: 'home' },
 	{ href: '/experience', label: 'experience' },
 	{ href: '/blog', label: 'blog' },
 ];
 
-const path = Astro.url.pathname.replace(/\/$/, '') || '/';
+const path = pagePath(Astro.url);
 const isActive = (href: string) => (href === '/' ? path === '/' : path.startsWith(href));
 ---
 

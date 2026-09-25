@@ -6,6 +6,7 @@ import { site } from '../data/site';
 import { getExperience, experienceHref } from '../lib/experience';
 import { getSubstackFeed } from '../lib/substack';
 import { formatDay, formatMonth } from '../lib/format';
+import { defaultImage, graph, personSchema } from '../lib/seo';
 import portrait from '../assets/tharshen-avatar.jpg';
 
 const experience = (await getExperience())
@@ -23,9 +24,19 @@ const writing = posts.slice(0, 3).map((post) => ({
 	title: post.title,
 	href: post.url,
 }));
+
+const description =
+	'Tharshen A/L Surian Balan: Computer Science student at Multimedia University working towards DevOps and Site Reliability Engineering roles, writing about observability. Ex-intern at iFAST Global Hub AI and MoneyLion.';
+const jsonLd = graph({
+	'@type': 'ProfilePage',
+	url: site.url,
+	name: site.title,
+	description,
+	mainEntity: personSchema((await defaultImage()).url),
+});
 ---
 
-<Layout>
+<Layout description={description} type="profile" jsonLd={jsonLd}>
 	<header class="intro">
 		<Image
 			class="portrait"

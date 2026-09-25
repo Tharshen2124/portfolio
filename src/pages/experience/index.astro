@@ -3,6 +3,7 @@ import Layout from '../../layouts/Layout.astro';
 import EntryList from '../../components/EntryList.astro';
 import { categories, getExperience, experienceHref } from '../../lib/experience';
 import { formatMonth } from '../../lib/format';
+import { absoluteUrl, breadcrumbSchema, graph, personId, personSchema } from '../../lib/seo';
 
 const experience = await getExperience();
 
@@ -16,12 +17,35 @@ const sections = categories.map(({ id, label }) => ({
 			href: experienceHref(entry),
 		})),
 }));
+
+const description = "Write-ups of Tharshen's work, university and volunteer experience.";
+const writeups = experience.filter((entry) => experienceHref(entry));
+const jsonLd = graph(
+	{
+		'@type': 'CollectionPage',
+		url: absoluteUrl('/experience'),
+		name: 'Experience',
+		description,
+		author: { '@id': personId },
+		mainEntity: {
+			'@type': 'ItemList',
+			itemListElement: writeups.map((entry, i) => ({
+				'@type': 'ListItem',
+				position: i + 1,
+				name: entry.data.title,
+				url: absoluteUrl(experienceHref(entry)!),
+			})),
+		},
+	},
+	personSchema(),
+	breadcrumbSchema([
+		{ name: 'Home', path: '/' },
+		{ name: 'Experience', path: '/experience' },
+	]),
+);
 ---
 
-<Layout
-	title="Experience"
-	description="Write-ups of Tharshen's work, university and volunteer experience."
->
+<Layout title="Experience" description={description} jsonLd={jsonLd}>
 	<h1 class="page-title">Experience</h1>
 	<p class="lede">
 		What I've worked on, the roles I've held at university, and the events I've volunteered for.

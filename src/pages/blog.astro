@@ -4,6 +4,7 @@ import EntryList from '../components/EntryList.astro';
 import { site } from '../data/site';
 import { getSubstackFeed } from '../lib/substack';
 import { formatDay } from '../lib/format';
+import { absoluteUrl, breadcrumbSchema, graph, personId, personSchema } from '../lib/seo';
 
 const { description, posts } = await getSubstackFeed();
 const blurb = (description ?? 'Writing about Site Reliability, Observability and DevOps').replace(/\.?$/, '.');
@@ -12,9 +13,34 @@ const entries = posts.map((post) => ({
 	title: post.title,
 	href: post.url,
 }));
+
+const title = 'Blog: Site Reliability, Observability & DevOps';
+const pageDescription =
+	"Tharshen's writing on Site Reliability Engineering, Observability and DevOps, published on Substack.";
+const jsonLd = graph(
+	{
+		'@type': 'Blog',
+		url: absoluteUrl('/blog'),
+		name: title,
+		description: pageDescription,
+		author: { '@id': personId },
+		blogPost: posts.map((post) => ({
+			'@type': 'BlogPosting',
+			headline: post.title,
+			url: post.url,
+			datePublished: post.date.toISOString(),
+			author: { '@id': personId },
+		})),
+	},
+	personSchema(),
+	breadcrumbSchema([
+		{ name: 'Home', path: '/' },
+		{ name: 'Blog', path: '/blog' },
+	]),
+);
 ---
 
-<Layout title="Blog" description="Tharshen's writing on Site Reliability, Observability and DevOps.">
+<Layout title={title} description={pageDescription} jsonLd={jsonLd}>
 	<h1 class="page-title">My Blog</h1>
 	<p class="lede">
 		{blurb} Posts live on <a href={site.substackUrl} target="_blank" rel="noopener noreferrer"

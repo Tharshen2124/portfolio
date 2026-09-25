@@ -4,6 +4,7 @@ import { render } from 'astro:content';
 import Layout from '../../layouts/Layout.astro';
 import { getExperience, hasWriteup, type Experience } from '../../lib/experience';
 import { formatRange } from '../../lib/format';
+import { absoluteUrl, breadcrumbSchema, graph, personId, personSchema } from '../../lib/seo';
 
 export const getStaticPaths = (async () => {
 	const entries = await getExperience();
@@ -23,9 +24,39 @@ const { title, role, organization, startDate, endDate, location, summary, skills
 const { Content } = await render(entry);
 
 const meta = [`${role}, ${organization}`, formatRange(startDate, endDate), location].filter(Boolean);
+
+const path = `/experience/${entry.id}`;
+const jsonLd = graph(
+	{
+		'@type': 'Article',
+		'@id': `${absoluteUrl(path)}#article`,
+		url: absoluteUrl(path),
+		mainEntityOfPage: absoluteUrl(path),
+		headline: title,
+		description: summary,
+		datePublished: startDate.toISOString(),
+		author: { '@id': personId },
+		about: { '@type': 'Organization', name: organization },
+		keywords: skills.join(', '),
+		inLanguage: 'en',
+	},
+	personSchema(),
+	breadcrumbSchema([
+		{ name: 'Home', path: '/' },
+		{ name: 'Experience', path: '/experience' },
+		{ name: title, path },
+	]),
+);
 ---
 
-<Layout title={title} description={summary}>
+<Layout
+	title={title}
+	description={summary}
+	type="article"
+	publishedTime={startDate}
+	markdownUrl={`${path}.md`}
+	jsonLd={jsonLd}
+>
 	<article>
 		<h1 class="article-title">{title}</h1>
 		<p class="article-meta">{meta.join(' · ')}</p>
