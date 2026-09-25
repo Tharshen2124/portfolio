@@ -1,6 +1,6 @@
 export const site = {
-	name: 'Tharshen Surian Balan',
-	title: 'Tharshen Surian Balan',
+	name: 'Tharshen A/L Surian Balan',
+	title: 'Tharshen A/L Surian Balan',
 	description:
 		'Computer Science student at Multimedia University working towards DevOps and SRE roles. Ex-intern at iFAST Global Hub AI and MoneyLion.',
 	substackUrl: 'https://tharshen.substack.com',
