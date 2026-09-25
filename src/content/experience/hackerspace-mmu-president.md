@@ -27,6 +27,10 @@ Hackerspace MMU is a community where people with shared interests in coding, tec
 
 I owe a lot to Willie Poh, who guided me throughout my presidency. What he taught me made me a better programmer, a better leader and a better person.
 
+## Starting the Hacktrack rebuild
+
+Near the start of my term, in November 2023, I started rebuilding **Hacktrack**, the system Hackerspace has used for 15 years to track members, projects and meetups. My first version was a Svelte frontend on top of the existing Rails app. I didn't finish it during my presidency, and it looks nothing like what runs today.
+
 ## Still here
 
-I've stayed involved since stepping down. I later led the rebuild of **Hacktrack**, the 15-year-old system Hackerspace uses to track members, projects and meetups. We added a new API layer, a Next.js committee dashboard, an automated registration pipeline and a Discord bot, all running at zero cost. It's the first thing I've deployed that real users rely on.
+I've stayed involved since stepping down. I came back to the rebuild in 2025, and it grew into the [Hackerspace Ecosystem](/experience/hackerspace-ecosystem): an API layer, a Next.js committee dashboard, an automated registration pipeline and a Discord bot, all running at zero cost.

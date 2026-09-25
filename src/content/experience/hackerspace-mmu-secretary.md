@@ -15,4 +15,4 @@ links:
 
 My first committee role at Hackerspace MMU was **Secretary**, from February to September 2023. My job was to record members' **IdeaTalks** and **ProgressTalks** on **Hacktrack MMU**, the internal system Hackerspace uses to track members and their project progress.
 
-Hacktrack stayed part of my time at Hackerspace. Member data used to live in both Hacktrack and a Google Sheet, and syncing them was fully manual. Years later I helped rebuild Hacktrack so new members are processed automatically and the committee works from one system. After serving as Secretary, I went on to become [President](/experience/hackerspace-mmu-president).
+Hacktrack stayed part of my time at Hackerspace. Member data used to live in both Hacktrack and a Google Sheet, and syncing them was fully manual. Years later I helped rebuild it into the [Hackerspace Ecosystem](/experience/hackerspace-ecosystem), so new members are processed automatically and the committee works from one system. After serving as Secretary, I went on to become [President](/experience/hackerspace-mmu-president).
