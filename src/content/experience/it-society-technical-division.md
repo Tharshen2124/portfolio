@@ -2,7 +2,7 @@
 title: Building the IT Society website
 role: Technical Division Member
 organization: IT Society MMU Cyberjaya
-category: university
+category: volunteer
 startDate: 2023-02-01
 endDate: 2024-02-29
 summary: Built the IT Society website with React.js and Storyblok as a member of the Technical Division.

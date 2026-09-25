@@ -2,7 +2,7 @@
 title: Vice President of Internal Affairs at IT Society
 role: Vice President of Internal Affairs
 organization: IT Society MMU Cyberjaya
-category: university
+category: volunteer
 startDate: 2024-02-01
 endDate: 2025-01-31
 location: Cyberjaya, Selangor · On-site

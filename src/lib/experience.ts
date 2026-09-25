@@ -3,9 +3,8 @@ import { getCollection, type CollectionEntry } from 'astro:content';
 export type Experience = CollectionEntry<'experience'>;
 
 export const categories = [
-	{ id: 'work', label: 'Work' },
-	{ id: 'university', label: 'University' },
-	{ id: 'volunteer', label: 'Volunteer' },
+	{ id: 'work', label: 'Work Experience' },
+	{ id: 'volunteer', label: 'Volunteer Experience' },
 ] as const;
 
 /** Entries without a Markdown body are listed but don't get their own page. */

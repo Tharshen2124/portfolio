@@ -2,7 +2,7 @@
 title: President of Hackerspace MMU
 role: President
 organization: Hackerspace MMU
-category: university
+category: volunteer
 startDate: 2023-09-01
 endDate: 2024-09-30
 location: Multimedia University · Hybrid

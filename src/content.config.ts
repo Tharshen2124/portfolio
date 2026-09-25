@@ -9,7 +9,7 @@ const experience = defineCollection({
 		title: z.string(),
 		role: z.string(),
 		organization: z.string(),
-		category: z.enum(['work', 'university', 'volunteer']),
+		category: z.enum(['work', 'volunteer']),
 		startDate: z.coerce.date(),
 		/** Leave out for ongoing roles. */
 		endDate: z.coerce.date().optional(),

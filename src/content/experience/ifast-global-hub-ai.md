@@ -1,5 +1,5 @@
 ---
-title: Building an automated testing system at iFAST Global Hub AI
+title: ITP Full Stack Engineer Intern at iFAST Global Hub AI
 role: ITP Full Stack Engineer Intern
 organization: iFAST Global Hub AI
 category: work

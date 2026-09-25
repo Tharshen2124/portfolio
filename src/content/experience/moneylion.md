@@ -1,5 +1,5 @@
 ---
-title: Web engineering at MoneyLion
+title: Web Engineer Intern at MoneyLion
 role: Web Engineer Intern
 organization: MoneyLion
 category: work

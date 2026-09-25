@@ -2,7 +2,7 @@
 title: Building the Hackerspace Ecosystem
 role: Lead Developer
 organization: Hackerspace MMU
-category: university
+category: volunteer
 startDate: 2023-11-01
 summary: Rebuilt Hackerspace MMU's 15-year-old member system into one ecosystem, with an API layer, a Next.js committee dashboard, an automated registration pipeline and a Discord bot, all running at zero cost.
 skills: [Next.js, TypeScript, Ruby on Rails, Google Apps Script, Discord Bots]

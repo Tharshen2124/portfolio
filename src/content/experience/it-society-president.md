@@ -2,7 +2,7 @@
 title: Leading IT Society MMU Cyberjaya as President
 role: President
 organization: IT Society MMU Cyberjaya
-category: university
+category: volunteer
 startDate: 2025-01-01
 endDate: 2025-12-31
 location: Multimedia University, Cyberjaya · On-site

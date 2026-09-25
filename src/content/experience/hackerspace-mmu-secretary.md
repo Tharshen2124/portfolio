@@ -2,7 +2,7 @@
 title: Secretary of Hackerspace MMU
 role: Secretary
 organization: Hackerspace MMU
-category: university
+category: volunteer
 startDate: 2023-02-01
 endDate: 2023-09-30
 location: On-site
