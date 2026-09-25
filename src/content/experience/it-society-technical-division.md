@@ -1,5 +1,5 @@
 ---
-title: Building the IT Society website
+title: Technical Division Member at IT Society MMU Cyberjaya
 role: Technical Division Member
 organization: IT Society MMU Cyberjaya
 category: volunteer

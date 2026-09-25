@@ -1,8 +1,9 @@
 ---
-title: Directing BarCamp Cyberjaya 2024
+title: Event Director at BarCamp Cyberjaya 2024
 role: Event Director
 organization: BarCamp Cyberjaya 2024
 category: volunteer
+featured: true
 startDate: 2024-04-01
 endDate: 2024-09-30
 location: Faculty of Computing & Informatics, MMU Cyberjaya

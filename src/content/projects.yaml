@@ -2,6 +2,7 @@
 - id: observability-victoriametrics
   order: 1
   name: Observability stack with VictoriaMetrics
+  startDate: 2026-03-15
   summary: >-
     A learning project for a full observability pipeline. A Go app instrumented with
     OpenTelemetry sends metrics, logs and traces through the OpenTelemetry Collector into
@@ -13,6 +14,7 @@
 - id: show-and-tell-tracker
   order: 2
   name: Show&Tell tracker for Malaysian AI
+  startDate: 2026-09-15
   summary: >-
     A tracker for the Malaysian AI weekly Show & Tell. It records members, meetups,
     projects and every talk, and highlights which projects are still moving and who has
@@ -25,6 +27,7 @@
 - id: hackerspace-ecosystem
   order: 3
   name: Hackerspace Ecosystem
+  startDate: 2023-11-01
   summary: >-
     The rebuild of Hacktrack, the system Hackerspace MMU has used for 15 years to track
     members, projects and meetups. An API layer over the original Rails app, a Next.js
@@ -38,6 +41,7 @@
 - id: k8s-platform-lab
   order: 4
   name: Kubernetes platform lab
+  startDate: 2026-08-02
   summary: >-
     A small Go web app that makes Kubernetes behaviour visible in the browser. It can
     fail its own health checks, burn CPU and memory on demand, and shows which pod and

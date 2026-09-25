@@ -13,6 +13,8 @@ const experience = defineCollection({
 		startDate: z.coerce.date(),
 		/** Leave out for ongoing roles. */
 		endDate: z.coerce.date().optional(),
+		/** Shown in the home page's Volunteer Highlights. */
+		featured: z.boolean().default(false),
 		location: z.string().optional(),
 		summary: z.string(),
 		skills: z.array(z.string()).default([]),
@@ -26,6 +28,8 @@ const projects = defineCollection({
 		/** Position on the projects page, matching the GitHub pinned order. */
 		order: z.number(),
 		name: z.string(),
+		/** When work started; the home page shows the most recent projects. */
+		startDate: z.coerce.date(),
 		/** One or two sentences; the repository has the rest. */
 		summary: z.string(),
 		stack: z.array(z.string()).default([]),

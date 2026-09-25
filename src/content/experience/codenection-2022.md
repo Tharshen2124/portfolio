@@ -1,7 +1,7 @@
 ---
 title: Multimedia Committee at CodeNection 2022
 role: Multimedia Committee
-organization: CodeNection
+organization: CodeNection 2022
 category: volunteer
 startDate: 2022-07-01
 endDate: 2022-11-30

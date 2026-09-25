@@ -1,5 +1,5 @@
 ---
-title: Head of Technical at BarCamp Cyberjaya 2023
+title: Head of Technical Department at BarCamp Cyberjaya 2023
 role: Head of Technical Department
 organization: BarCamp Cyberjaya 2023
 category: volunteer

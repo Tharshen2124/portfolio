@@ -1,5 +1,5 @@
 ---
-title: Building the Hackerspace Ecosystem
+title: Lead Developer at Hackerspace MMU
 role: Lead Developer
 organization: Hackerspace MMU
 category: volunteer

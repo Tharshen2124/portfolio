@@ -1,5 +1,5 @@
 ---
-title: Secretary of Hackerspace MMU
+title: Secretary at Hackerspace MMU
 role: Secretary
 organization: Hackerspace MMU
 category: volunteer

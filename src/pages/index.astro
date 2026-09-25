@@ -4,6 +4,7 @@ import Layout from '../layouts/Layout.astro';
 import EntryList from '../components/EntryList.astro';
 import { site } from '../data/site';
 import { getExperience, experienceHref, type Experience } from '../lib/experience';
+import { getRecentProjects } from '../lib/projects';
 import { getSubstackFeed } from '../lib/substack';
 import { formatDay, formatMonth } from '../lib/format';
 import { defaultImage, graph, personSchema } from '../lib/seo';
@@ -17,9 +18,14 @@ const toEntry = (entry: Experience) => ({
 });
 const work = writeups.filter((entry) => entry.data.category === 'work').map(toEntry);
 const volunteer = writeups
-	.filter((entry) => entry.data.category === 'volunteer')
-	.slice(0, 5)
+	.filter((entry) => entry.data.category === 'volunteer' && entry.data.featured)
 	.map(toEntry);
+
+const projects = (await getRecentProjects()).slice(0, 3).map(({ data }) => ({
+	date: formatMonth(data.startDate),
+	title: data.name,
+	href: data.repo,
+}));
 
 const { posts } = await getSubstackFeed();
 const writing = posts.slice(0, 3).map((post) => ({
@@ -70,7 +76,11 @@ const jsonLd = graph({
 	<EntryList entries={work} />
 	<a class="more-link" href="/experience#work">all experience →</a>
 
-	<h2 class="section-title">Volunteer Experience</h2>
+	<h2 class="section-title">Recent Projects</h2>
+	<EntryList entries={projects} />
+	<a class="more-link" href="/projects">all projects →</a>
+
+	<h2 class="section-title">Volunteer Highlights</h2>
 	<EntryList entries={volunteer} />
 	<a class="more-link" href="/experience#volunteer">all volunteer experience →</a>
 

@@ -1,5 +1,5 @@
 ---
-title: Vice President of Internal Affairs at IT Society
+title: Vice President of Internal Affairs at IT Society MMU Cyberjaya
 role: Vice President of Internal Affairs
 organization: IT Society MMU Cyberjaya
 category: volunteer
