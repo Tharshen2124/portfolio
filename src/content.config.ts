@@ -16,7 +16,8 @@ const experience = defineCollection({
 		/** Shown in the home page's Volunteer Highlights. */
 		featured: z.boolean().default(false),
 		location: z.string().optional(),
-		summary: z.string(),
+		/** Also the page's meta description, so kept within 160 characters. */
+		summary: z.string().max(160),
 		skills: z.array(z.string()).default([]),
 		links: z.array(z.object({ label: z.string(), url: z.url() })).default([]),
 	}),

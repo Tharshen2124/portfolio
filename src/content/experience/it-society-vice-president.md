@@ -6,7 +6,7 @@ category: volunteer
 startDate: 2024-02-01
 endDate: 2025-01-31
 location: Cyberjaya, Selangor · On-site
-summary: Designed a new web architecture for the society's websites, wrote the Digital Preservation Manifesto, organised BarCamp Cyberjaya 2024 and ran a Git & GitHub workshop.
+summary: Designed the society's new web architecture, wrote the Digital Preservation Manifesto, organised BarCamp Cyberjaya 2024 and ran a Git & GitHub workshop.
 skills: [Leadership, Web Architecture, Workshop Facilitation]
 links:
   - label: "Sustainability: Is It Teachable? (IT Society blog)"
