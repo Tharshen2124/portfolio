@@ -19,7 +19,7 @@ export default defineConfig({
 			name: 'Hanken Grotesk',
 			cssVariable: '--font-sans',
 			weights: ['100 900'],
-			styles: ['normal', 'italic'],
+			styles: ['normal'],
 			subsets: ['latin'],
 			fallbacks: ['sans-serif'],
 		},
