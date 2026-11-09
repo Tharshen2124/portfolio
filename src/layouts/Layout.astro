@@ -2,6 +2,7 @@
 import { Font } from 'astro:assets';
 import Nav from '../components/Nav.astro';
 import Footer from '../components/Footer.astro';
+import PostHog from '../components/posthog.astro';
 import { site } from '../data/site';
 import { absoluteUrl, defaultImage, pagePath, type JsonLd } from '../lib/seo';
 import '../styles/global.css';
@@ -86,6 +87,7 @@ const image = await defaultImage();
 		{markdownUrl && <link rel="alternate" type="text/markdown" href={markdownUrl} />}
 		{jsonLd && <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />}
 		<Font cssVariable="--font-sans" preload />
+		<PostHog />
 	</head>
 	<body>
 		<div class="container">

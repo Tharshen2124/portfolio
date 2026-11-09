@@ -13,7 +13,12 @@ const links = [
 		{
 			links.map(({ href, label }) => (
 				<li>
-					<a href={href} target="_blank" rel="noopener noreferrer">
+					<a
+						href={href}
+						target="_blank"
+						rel="noopener noreferrer"
+						data-posthog-social-profile={label}
+					>
 						<svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
 							<path
 								d="M2.07102 11.3494L0.963068 10.2415L9.2017 1.98864H2.83807L2.85227 0.454545H11.8438V9.46023H10.2955L10.3097 3.09659L2.07102 11.3494Z"
@@ -28,6 +33,16 @@ const links = [
 	</ul>
 	<p>© {new Date().getFullYear()} {site.name}</p>
 </footer>
+
+<script is:inline>
+	document.querySelectorAll('[data-posthog-social-profile]').forEach((link) => {
+		link.addEventListener('click', () => {
+			window.posthog?.capture('social_profile_opened', {
+				profile: link.dataset.posthogSocialProfile,
+			});
+		});
+	});
+</script>
 
 <style>
 	footer {

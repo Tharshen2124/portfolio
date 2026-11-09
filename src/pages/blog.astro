@@ -43,16 +43,25 @@ const jsonLd = graph(
 <Layout title={title} description={pageDescription} jsonLd={jsonLd}>
 	<h1 class="page-title">My Blog</h1>
 	<p class="lede">
-		{blurb} Posts live on <a href={site.substackUrl} target="_blank" rel="noopener noreferrer"
-			>Substack</a
-		>.
+		{blurb} Posts live on <a
+			href={site.substackUrl}
+			target="_blank"
+			rel="noopener noreferrer"
+			data-posthog-blog-link="substack_intro">Substack</a
+		>. 
 	</p>
 
 	{
 		entries.length > 0 ? (
-			<EntryList entries={entries} />
+			<EntryList entries={entries} trackBlogLinks />
 		) : (
-			<a class="more-link" href={site.substackUrl} target="_blank" rel="noopener noreferrer">
+			<a
+				class="more-link"
+				href={site.substackUrl}
+				target="_blank"
+				rel="noopener noreferrer"
+				data-posthog-blog-link="substack_fallback"
+			>
 				Read on Substack ↗
 			</a>
 		)
@@ -66,6 +75,19 @@ const jsonLd = graph(
 		loading="lazy"
 		scrolling="no"></iframe>
 </Layout>
+
+<script is:inline>
+	document.querySelectorAll('[data-posthog-blog-link]').forEach((link) => {
+		link.addEventListener('click', () => {
+			window.posthog?.capture('blog_opened', {
+				link_location: link.dataset.posthogBlogLink,
+			});
+			window.posthog?.logger?.info('portfolio blog opened', {
+				link_location: link.dataset.posthogBlogLink,
+			});
+		});
+	});
+</script>
 
 <style>
 	.substack-embed {

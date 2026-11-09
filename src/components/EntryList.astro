@@ -7,9 +7,10 @@ export interface Entry {
 
 interface Props {
 	entries: Entry[];
+	trackBlogLinks?: boolean;
 }
 
-const { entries } = Astro.props;
+const { entries, trackBlogLinks = false } = Astro.props;
 const isExternal = (href: string) => /^https?:\/\//.test(href);
 ---
 
@@ -23,6 +24,7 @@ const isExternal = (href: string) => /^https?:\/\//.test(href);
 						class="title"
 						href={href}
 						{...(isExternal(href) && { target: '_blank', rel: 'noopener noreferrer' })}
+						{...(trackBlogLinks && { 'data-posthog-blog-post': true })}
 					>
 						{title}
 					</a>
@@ -33,6 +35,16 @@ const isExternal = (href: string) => /^https?:\/\//.test(href);
 		))
 	}
 </ul>
+
+<script is:inline>
+	document.querySelectorAll('[data-posthog-blog-post]').forEach((link) => {
+		link.addEventListener('click', () => {
+			window.posthog?.capture('blog_opened', {
+				link_location: 'post_list',
+			});
+		});
+	});
+</script>
 
 <style>
 	/* Date column sizes to the widest date in the list, like the design. */

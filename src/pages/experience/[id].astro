@@ -76,7 +76,13 @@ const jsonLd = graph(
 			{
 				links.map(({ label, url }) => (
 					<p>
-						<a class="more-link" href={url} target="_blank" rel="noopener noreferrer">
+						<a
+							class="more-link"
+							href={url}
+							target="_blank"
+							rel="noopener noreferrer"
+							data-posthog-experience-resource={label}
+						>
 							{label} ↗
 						</a>
 					</p>
@@ -88,3 +94,13 @@ const jsonLd = graph(
 		</footer>
 	</article>
 </Layout>
+
+<script is:inline>
+	document.querySelectorAll('[data-posthog-experience-resource]').forEach((link) => {
+		link.addEventListener('click', () => {
+			window.posthog?.capture('experience_resource_opened', {
+				link_location: 'article_footer',
+			});
+		});
+	});
+</script>
