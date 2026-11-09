@@ -16,6 +16,7 @@
   "dependencies": {
     "@astrojs/sitemap": "^3.7.4",
     "astro": "^7.3.3",
+    "posthog-js": "^1.447.4",
     "simple-icons": "^16.32.0"
   },
   "allowScripts": {

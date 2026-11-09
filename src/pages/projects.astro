@@ -55,18 +55,35 @@ const jsonLd = graph(
 			projects.map(({ data }) => (
 				<li>
 					<h2 class="project-name">
-						<a href={data.repo} target="_blank" rel="noopener noreferrer">
+						<a
+							href={data.repo}
+							target="_blank"
+							rel="noopener noreferrer"
+							data-posthog-project-repository={data.name}
+						>
 							{data.name}
 						</a>
 					</h2>
 					<p class="justify">{data.summary}</p>
 					{data.stack.length > 0 && <StackList stack={data.stack} />}
 					<p class="links">
-						<a class="more-link" href={data.repo} target="_blank" rel="noopener noreferrer">
+						<a
+							class="more-link"
+							href={data.repo}
+							target="_blank"
+							rel="noopener noreferrer"
+							data-posthog-project-repository={data.name}
+						>
 							repository ↗
 						</a>
 						{data.site && (
-							<a class="more-link" href={data.site} target="_blank" rel="noopener noreferrer">
+							<a
+								class="more-link"
+								href={data.site}
+								target="_blank"
+								rel="noopener noreferrer"
+								data-posthog-project-live-site={data.name}
+							>
 								live site ↗
 							</a>
 						)}
@@ -81,6 +98,30 @@ const jsonLd = graph(
 		}
 	</ul>
 </Layout>
+
+<script is:inline>
+	document.querySelectorAll('[data-posthog-project-repository]').forEach((link) => {
+		link.addEventListener('click', () => {
+			window.posthog?.capture('project_repository_opened', {
+				project_name: link.dataset.posthogProjectRepository,
+			});
+			window.posthog?.logger?.info('portfolio project repository opened', {
+				project_name: link.dataset.posthogProjectRepository,
+			});
+		});
+	});
+
+	document.querySelectorAll('[data-posthog-project-live-site]').forEach((link) => {
+		link.addEventListener('click', () => {
+			window.posthog?.capture('project_live_site_opened', {
+				project_name: link.dataset.posthogProjectLiveSite,
+			});
+			window.posthog?.logger?.info('portfolio project live site opened', {
+				project_name: link.dataset.posthogProjectLiveSite,
+			});
+		});
+	});
+</script>
 
 <style>
 	.projects {
