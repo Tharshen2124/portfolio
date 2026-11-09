@@ -34,7 +34,6 @@ const jsonLd = graph(
 		mainEntityOfPage: absoluteUrl(path),
 		headline: title,
 		description: summary,
-		datePublished: startDate.toISOString(),
 		author: { '@id': personId },
 		about: { '@type': 'Organization', name: organization },
 		keywords: skills.join(', '),
@@ -53,7 +52,6 @@ const jsonLd = graph(
 	title={title}
 	description={summary}
 	type="article"
-	publishedTime={startDate}
 	markdownUrl={`${path}.md`}
 	jsonLd={jsonLd}
 >
