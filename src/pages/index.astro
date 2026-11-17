@@ -204,8 +204,8 @@ const jsonLd = graph({
 										class="portrait"
 										src={portrait}
 										alt=""
-										width={200}
-										height={200}
+										width={140}
+										height={140}
 										densities={[1, 2]}
 										fit="cover"
 										loading="eager"
@@ -453,7 +453,8 @@ const jsonLd = graph({
 	.orb::after {
 		inset: -21%;
 		border: 1px dashed rgba(200, 215, 245, 0.12);
-		animation: orbit 90s linear infinite;
+		/* Turns only while its planet is hovered, so an idle map renders no frames. */
+		animation: orbit 40s linear infinite paused;
 	}
 
 	@keyframes orbit {
@@ -476,6 +477,7 @@ const jsonLd = graph({
 	a:focus-visible .orb::after {
 		border-color: rgba(255, 255, 255, 0.4);
 		scale: 0.94;
+		animation-play-state: running;
 	}
 
 	.portrait {
