@@ -251,6 +251,8 @@ const jsonLd = graph({
 			}
 		</ul>
 
+		<button type="button" class="plain-switch" data-set-mode="plain">Just the info</button>
+
 		<ul class="socials" aria-label="Profiles">
 			{
 				socials.map(({ href, label }) => (
@@ -746,6 +748,26 @@ const jsonLd = graph({
 		color: var(--accent);
 	}
 
+	/* ---- Way out to the plain site, bottom left ---- */
+
+	.plain-switch {
+		position: absolute;
+		left: clamp(1.25rem, 4vw, 4.5rem);
+		bottom: calc(28 * var(--u));
+		padding: 0;
+		border: 0;
+		background: none;
+		color: var(--fg-strong);
+		font: inherit;
+		font-size: clamp(0.8125rem, calc(22 * var(--u)), 1.125rem);
+		cursor: pointer;
+		transition: color 0.15s;
+	}
+
+	.plain-switch:hover {
+		color: var(--accent);
+	}
+
 	/* ---- About, below the map ---- */
 
 	.about {
@@ -867,6 +889,15 @@ const jsonLd = graph({
 			font-size: 0.875rem;
 		}
 
+		.plain-switch {
+			position: static;
+			display: block;
+			margin: 2.5rem auto 0;
+			font-size: 0.875rem;
+			text-decoration: underline;
+			text-underline-offset: 3px;
+		}
+
 		.about {
 			padding-top: 3rem;
 		}
@@ -875,5 +906,31 @@ const jsonLd = graph({
 			width: 4rem;
 			height: 4rem;
 		}
+	}
+
+	/* ---- Plain mode: no map, just the original intro and lists ---- */
+
+	:global(html[data-mode='plain']) .map {
+		display: none;
+	}
+
+	:global(html[data-mode='plain']) .about {
+		max-width: none;
+		padding: 0;
+	}
+
+	:global(html[data-mode='plain']) .intro {
+		max-width: none;
+	}
+
+	:global(html[data-mode='plain']) .avatar {
+		width: 6rem;
+		height: 6rem;
+		border-radius: 0.75rem;
+		box-shadow: none;
+	}
+
+	:global(html[data-mode='plain']) .logs {
+		display: block;
 	}
 </style>

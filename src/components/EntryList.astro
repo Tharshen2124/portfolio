@@ -103,4 +103,34 @@ const isExternal = (href: string) => /^https?:\/\//.test(href);
 			row-gap: 0.125rem;
 		}
 	}
+
+	/* Plain mode: the original loose list. */
+	:global(html[data-mode='plain']) .entries {
+		column-gap: 1rem;
+		row-gap: 1rem;
+	}
+
+	:global(html[data-mode='plain']) li {
+		padding: 0;
+		border: 0;
+	}
+
+	:global(html[data-mode='plain']) .date {
+		font-size: inherit;
+		font-weight: inherit;
+		letter-spacing: normal;
+		text-transform: none;
+	}
+
+	:global(html[data-mode='plain']) a.title:hover {
+		color: var(--fg-strong);
+		text-decoration: underline;
+		text-underline-offset: 3px;
+	}
+
+	@media (max-width: 639px) {
+		:global(html[data-mode='plain']) li {
+			row-gap: 0.125rem;
+		}
+	}
 </style>

@@ -58,4 +58,8 @@ const { stack } = Astro.props;
 		height: 0.95rem;
 		fill: currentColor;
 	}
+
+	:global(html[data-mode='plain']) li {
+		border-radius: 0.5rem;
+	}
 </style>

@@ -165,4 +165,42 @@ const isActive = (href: string) => (href === '/' ? path === '/' : path.startsWit
 			font-size: 0.75rem;
 		}
 	}
+
+	/* Plain mode: the original row of text links. */
+	:global(html[data-mode='plain']) .hud {
+		position: static;
+		display: block;
+		height: auto;
+		padding: 0;
+		background: none;
+		text-transform: none;
+	}
+
+	:global(html[data-mode='plain']) .identity {
+		display: none;
+	}
+
+	:global(html[data-mode='plain']) nav {
+		flex-wrap: wrap;
+		gap: 0;
+		margin-left: -0.5rem;
+	}
+
+	:global(html[data-mode='plain']) nav a {
+		padding: 0.25rem 0.5rem;
+		margin: 0.25rem 0.125rem;
+		font-size: inherit;
+		font-weight: inherit;
+		letter-spacing: normal;
+		color: var(--muted);
+	}
+
+	:global(html[data-mode='plain']) nav a::after {
+		content: none;
+	}
+
+	:global(html[data-mode='plain']) nav a:hover,
+	:global(html[data-mode='plain']) nav a[aria-current='page'] {
+		color: var(--fg-strong);
+	}
 </style>

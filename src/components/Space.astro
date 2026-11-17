@@ -87,6 +87,8 @@ const ticks = Array.from({ length: 72 }, (_, i) => ({ angle: i * 5, major: i % 6
 		let height = 0;
 
 		const paint = () => {
+			// Plain mode has no sky; paint only once someone switches to the map.
+			if (document.documentElement.dataset.mode === 'plain') return;
 			const w = window.innerWidth;
 			const h = window.innerHeight;
 			// Mobile browsers resize as the address bar hides; skip those small changes.
@@ -121,6 +123,7 @@ const ticks = Array.from({ length: 72 }, (_, i) => ({ angle: i * 5, major: i % 6
 		};
 
 		paint();
+		window.addEventListener('sitemode', paint);
 		let pending = 0;
 		window.addEventListener('resize', () => {
 			clearTimeout(pending);
@@ -235,5 +238,9 @@ const ticks = Array.from({ length: 72 }, (_, i) => ({ angle: i * 5, major: i % 6
 		.frame {
 			inset: 0.5rem;
 		}
+	}
+
+	:global(html[data-mode='plain']) .space {
+		display: none;
 	}
 </style>

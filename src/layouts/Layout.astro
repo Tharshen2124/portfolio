@@ -3,6 +3,7 @@ import { Font } from 'astro:assets';
 import Nav from '../components/Nav.astro';
 import Footer from '../components/Footer.astro';
 import Space from '../components/Space.astro';
+import Gate from '../components/Gate.astro';
 import PostHog from '../components/posthog.astro';
 import { site } from '../data/site';
 import { absoluteUrl, defaultImage, pagePath, type JsonLd } from '../lib/seo';
@@ -51,6 +52,21 @@ const image = await defaultImage();
 		{noindex && <meta name="robots" content="noindex" />}
 		<link rel="canonical" href={canonicalURL} />
 		<meta name="theme-color" content="#05070d" />
+		<script is:inline>
+			// Apply the reader's chosen mode before first paint: "plain" (the original
+			// minimal site), "map" (the star map), or "ask" when they haven't chosen.
+			(() => {
+				let mode;
+				try {
+					mode = localStorage.getItem('site-mode');
+				} catch {}
+				document.documentElement.dataset.mode = mode === 'plain' || mode === 'map' ? mode : 'ask';
+				if (mode === 'plain') {
+					const dark = matchMedia('(prefers-color-scheme: dark)').matches;
+					document.querySelector('meta[name="theme-color"]').content = dark ? '#000000' : '#ffffff';
+				}
+			})();
+		</script>
 
 		<meta property="og:title" content={pageTitle} />
 		<meta property="og:description" content={description} />
@@ -90,5 +106,6 @@ const image = await defaultImage();
 			<slot />
 		</main>
 		<Footer />
+		<Gate />
 	</body>
 </html>
