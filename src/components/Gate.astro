@@ -1,0 +1,234 @@
+---
+/**
+ * First-visit choice between the two ways to read the site:
+ *   plain – the original minimal site, for someone who wants the facts and out
+ *   map   – the star map
+ *
+ * The choice lives in localStorage and is applied to <html data-mode> by the
+ * inline script in Layout's <head>, before first paint. Until a choice exists
+ * the mode is "ask", which is the only state that shows this dialog. Without
+ * JavaScript there is no "ask" state and the star map is shown.
+ */
+---
+
+<div class="gate" role="dialog" aria-modal="true" aria-labelledby="gate-title" tabindex="-1">
+	<div class="gate-inner">
+		<p class="kicker">Before you go in</p>
+		<h2 id="gate-title" class="title">How would you like to do this?</h2>
+
+		<div class="choices">
+			<button type="button" class="choice" data-set-mode="plain">
+				<svg class="glyph" viewBox="0 0 48 48" aria-hidden="true">
+					<line x1="10" y1="14" x2="38" y2="14"></line>
+					<line x1="10" y1="24" x2="38" y2="24"></line>
+					<line x1="10" y1="34" x2="28" y2="34"></line>
+				</svg>
+				<span class="choice-name">Just the info</span>
+				<span class="choice-text">
+					The plain site. Experience, projects and writing on one page, then you're on your way.
+				</span>
+			</button>
+
+			<button type="button" class="choice" data-set-mode="map">
+				<svg class="glyph" viewBox="0 0 48 48" aria-hidden="true">
+					<circle cx="24" cy="24" r="11"></circle>
+					<ellipse cx="24" cy="24" rx="21" ry="7" transform="rotate(-24 24 24)"></ellipse>
+					<circle class="solid" cx="24" cy="24" r="2.5"></circle>
+				</svg>
+				<span class="choice-name">Explore my destiny</span>
+				<span class="choice-text">
+					A star map of everything I've done so far. Pick a destination and wander.
+				</span>
+			</button>
+		</div>
+
+		<p class="note">You can switch at any time from the bottom of any page.</p>
+	</div>
+</div>
+
+<script is:inline>
+	(() => {
+		const root = document.documentElement;
+		const gate = document.querySelector('.gate');
+		// Everything else on the page is inert while the question is open.
+		const rest = [...document.body.children].filter((el) => el !== gate && el.tagName !== 'SCRIPT');
+		const setInert = (inert) => rest.forEach((el) => (el.inert = inert));
+
+		if (root.dataset.mode === 'ask') {
+			setInert(true);
+			// Focus the dialog, not a choice, so neither option looks pre-selected.
+			gate.focus({ preventScroll: true });
+		}
+
+		// Any element with data-set-mode switches mode: the two choices here,
+		// and the switch links in the footer and on the map.
+		document.addEventListener('click', (event) => {
+			const control = event.target.closest('[data-set-mode]');
+			if (!control) return;
+			const mode = control.dataset.setMode;
+			const firstChoice = root.dataset.mode === 'ask';
+			try {
+				localStorage.setItem('site-mode', mode);
+			} catch {
+				// Private browsing: the choice just won't be remembered.
+			}
+			root.dataset.mode = mode;
+			setInert(false);
+			window.dispatchEvent(new Event('sitemode'));
+			if (!firstChoice) window.scrollTo(0, 0);
+			window.posthog?.capture('site_mode_chosen', { mode, first_choice: firstChoice });
+		});
+	})();
+</script>
+
+<style>
+	.gate {
+		display: none;
+		position: fixed;
+		inset: 0;
+		z-index: 100;
+		overflow-y: auto;
+		background: radial-gradient(90% 70% at 50% 45%, rgba(8, 12, 24, 0.82), rgba(3, 5, 11, 0.96));
+		/* The gate always wears the star-map palette, whatever sits behind it. */
+		color: #c9d0dc;
+		outline: none;
+	}
+
+	:global(html[data-mode='ask']) .gate {
+		display: grid;
+		place-items: center;
+	}
+
+	:global(html[data-mode='ask']) {
+		overflow: hidden;
+	}
+
+	.gate-inner {
+		width: min(100%, 50rem);
+		padding: 3rem 1.25rem;
+		text-align: center;
+		animation: rise 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+	}
+
+	@keyframes rise {
+		from {
+			opacity: 0;
+			translate: 0 0.75rem;
+		}
+	}
+
+	.kicker {
+		margin: 0 0 1rem;
+		font-size: 0.75rem;
+		font-weight: 600;
+		letter-spacing: 0.24em;
+		text-transform: uppercase;
+		color: #5fd6c9;
+	}
+
+	.title {
+		margin: 0 0 2.75rem;
+		font-family: var(--font-display), Georgia, serif;
+		font-size: clamp(1.25rem, 4.2vw, 2rem);
+		font-weight: 500;
+		line-height: 1.4;
+		letter-spacing: 0.2em;
+		text-transform: uppercase;
+		text-wrap: balance;
+		color: #f4f6fa;
+	}
+
+	.choices {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(min(100%, 17rem), 1fr));
+		gap: 1.25rem;
+	}
+
+	.choice {
+		display: grid;
+		justify-items: center;
+		align-content: start;
+		gap: 0.6rem;
+		padding: 2rem 1.5rem 1.75rem;
+		border: 1px solid rgba(190, 205, 235, 0.22);
+		border-top: 3px solid rgba(190, 205, 235, 0.45);
+		background: rgba(10, 14, 26, 0.78);
+		color: inherit;
+		font: inherit;
+		cursor: pointer;
+		transition:
+			border-color 0.2s,
+			background-color 0.2s,
+			translate 0.25s cubic-bezier(0.2, 0.7, 0.2, 1);
+	}
+
+	.choice:hover,
+	.choice:focus-visible {
+		border-color: #f4f6fa;
+		background: rgba(22, 30, 52, 0.9);
+		translate: 0 -0.25rem;
+		outline: none;
+	}
+
+	.glyph {
+		width: 3rem;
+		height: 3rem;
+		margin-bottom: 0.5rem;
+		fill: none;
+		stroke: #f4f6fa;
+		stroke-width: 1.5;
+		stroke-linecap: round;
+	}
+
+	.glyph .solid {
+		fill: #f4f6fa;
+		stroke: none;
+	}
+
+	.choice-name {
+		font-size: 1.0625rem;
+		font-weight: 700;
+		letter-spacing: 0.12em;
+		text-transform: uppercase;
+		color: #f4f6fa;
+	}
+
+	.choice-text {
+		max-width: 19rem;
+		font-size: 0.9375rem;
+		line-height: 1.55;
+		color: #aab3c4;
+	}
+
+	@media (max-width: 719px) {
+		/* The cards fill the screen here, so hide the page behind them fully. */
+		.gate {
+			background: rgba(3, 5, 11, 0.97);
+		}
+
+		.gate-inner {
+			padding: 2.5rem 1.25rem;
+		}
+
+		.title {
+			margin-bottom: 2rem;
+		}
+
+		.choice {
+			padding: 1.5rem 1.25rem;
+		}
+
+		.glyph {
+			width: 2.25rem;
+			height: 2.25rem;
+			margin-bottom: 0.25rem;
+		}
+	}
+
+	.note {
+		margin: 2.25rem 0 0;
+		font-size: 0.8125rem;
+		letter-spacing: 0.04em;
+		color: #8b95a8;
+	}
+</style>

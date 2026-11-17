@@ -1,0 +1,172 @@
+---
+/**
+ * A procedurally drawn planet: gradient sphere, turbulence for surface detail,
+ * a terminator shadow and an atmosphere halo. No image assets.
+ */
+export type PlanetKind =
+	| 'ice'
+	| 'gas'
+	| 'ember'
+	| 'eclipse'
+	| 'aurora'
+	| 'rust'
+	| 'moon'
+	| 'violet';
+
+interface Props {
+	kind: PlanetKind;
+	/** Unique per page; namespaces the SVG gradient and filter ids. */
+	id: string;
+}
+
+interface Look {
+	light: string;
+	mid: string;
+	dark: string;
+	glow: string;
+	/** feTurbulence baseFrequency; two values stretch the noise into bands. */
+	frequency: string;
+	seed: number;
+	texture: number;
+}
+
+const looks: Record<PlanetKind, Look> = {
+	ice: { light: '#c3d2ea', mid: '#5f7396', dark: '#141b2e', glow: '#8fb0e8', frequency: '0.018', seed: 4, texture: 0.9 },
+	gas: { light: '#8ab4f2', mid: '#2f58b0', dark: '#0a1438', glow: '#5c8cf0', frequency: '0.006 0.07', seed: 11, texture: 0.8 },
+	ember: { light: '#f0937a', mid: '#a43a34', dark: '#260a0c', glow: '#ff6a5c', frequency: '0.02 0.035', seed: 7, texture: 1 },
+	eclipse: { light: '#0a0c14', mid: '#05060b', dark: '#000000', glow: '#a9b8ff', frequency: '0.03', seed: 1, texture: 0 },
+	aurora: { light: '#7ff0d6', mid: '#1f7f8c', dark: '#06202c', glow: '#62f0cf', frequency: '0.012 0.03', seed: 19, texture: 1 },
+	rust: { light: '#f09a58', mid: '#b04a1e', dark: '#2c0d05', glow: '#ff8a4a', frequency: '0.022', seed: 23, texture: 0.9 },
+	moon: { light: '#d8dade', mid: '#7c8088', dark: '#15161a', glow: '#c9d2e6', frequency: '0.045', seed: 31, texture: 1 },
+	violet: { light: '#d9b8f6', mid: '#7a4cc0', dark: '#190c38', glow: '#b58cff', frequency: '0.01 0.045', seed: 13, texture: 0.85 },
+};
+
+const { kind, id } = Astro.props;
+const look = looks[kind];
+const ref = (name: string) => `url(#${id}-${name})`;
+---
+
+<svg class:list={['planet', kind]} viewBox="0 0 240 240" aria-hidden="true">
+	<defs>
+		<radialGradient id={`${id}-body`} cx="36%" cy="30%" r="95%">
+			<stop offset="0" stop-color={look.light}></stop>
+			<stop offset="0.45" stop-color={look.mid}></stop>
+			<stop offset="1" stop-color={look.dark}></stop>
+		</radialGradient>
+		<radialGradient id={`${id}-shade`} cx="32%" cy="27%" r="78%">
+			<stop offset="0.4" stop-color="#000" stop-opacity="0"></stop>
+			<stop offset="0.85" stop-color="#000" stop-opacity="0.5"></stop>
+			<stop offset="1" stop-color="#000" stop-opacity="0.82"></stop>
+		</radialGradient>
+		<radialGradient id={`${id}-halo`}>
+			<stop offset="0.64" stop-color={look.glow} stop-opacity="0"></stop>
+			<stop offset="0.675" stop-color={look.glow} stop-opacity={kind === 'eclipse' ? 0.95 : 0.36}></stop>
+			<stop offset="1" stop-color={look.glow} stop-opacity="0"></stop>
+		</radialGradient>
+		{
+			look.texture > 0 &&
+				[0, 1].map((layer) => (
+					<filter id={`${id}-surface-${layer}`} x="0" y="0" width="100%" height="100%">
+						<feTurbulence
+							type="fractalNoise"
+							baseFrequency={look.frequency}
+							numOctaves="4"
+							seed={look.seed + layer * 50}
+							result="noise"
+						/>
+						<feColorMatrix
+							in="noise"
+							type="matrix"
+							values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  1.6 1.6 1.6 0 -1.25"
+							result="mottle"
+						/>
+						<feComposite in="mottle" in2="SourceGraphic" operator="in" />
+					</filter>
+				))
+		}
+		<clipPath id={`${id}-clip`}><circle cx="120" cy="120" r="100"></circle></clipPath>
+	</defs>
+
+	<circle cx="120" cy="120" r="150" fill={ref('halo')}></circle>
+	{
+		kind === 'gas' && (
+			<g class="ring back" transform="rotate(-18 120 120)">
+				<ellipse cx="120" cy="120" rx="150" ry="30" />
+				<ellipse cx="120" cy="120" rx="138" ry="26" />
+			</g>
+		)
+	}
+	<circle cx="120" cy="120" r="100" fill={ref('body')}></circle>
+	{
+		look.texture > 0 && (
+			<>
+				<circle cx="120" cy="120" r="100" fill="#000" opacity={look.texture * 0.5} filter={ref('surface-0')} />
+				<circle cx="120" cy="120" r="100" fill={look.light} opacity={look.texture * 0.3} filter={ref('surface-1')} />
+			</>
+		)
+	}
+	{
+		kind === 'rust' && (
+			<g class="wire" clip-path={ref('clip')}>
+				{[17, 40, 64, 86].map((rx) => (
+					<ellipse cx="120" cy="120" rx={rx} ry="100" />
+				))}
+				{[-72, -43, -14, 14, 43, 72].map((dy) => (
+					<ellipse cx="120" cy={120 + dy} rx={Math.sqrt(100 * 100 - dy * dy)} ry={12 - Math.abs(dy) / 10} />
+				))}
+				<line x1="120" y1="20" x2="120" y2="220" />
+			</g>
+		)
+	}
+	<circle cx="120" cy="120" r="100" fill={ref('shade')}></circle>
+	<circle class="rim" cx="120" cy="120" r="100"></circle>
+	{
+		kind === 'gas' && (
+			<g class="ring front" transform="rotate(-18 120 120)">
+				<ellipse cx="120" cy="120" rx="150" ry="30" pathLength="100" />
+				<ellipse cx="120" cy="120" rx="138" ry="26" pathLength="100" />
+			</g>
+		)
+	}
+</svg>
+
+<style>
+	.planet {
+		display: block;
+		width: 100%;
+		height: 100%;
+		overflow: visible;
+	}
+
+	.rim {
+		fill: none;
+		stroke: rgba(255, 255, 255, 0.28);
+		stroke-width: 0.75;
+	}
+
+	.eclipse .rim {
+		stroke: rgba(215, 225, 255, 0.95);
+		stroke-width: 1.5;
+	}
+
+	.ring {
+		fill: none;
+		stroke: rgba(190, 212, 255, 0.6);
+		stroke-width: 1.1;
+	}
+
+	/* Only the near half of the ring is drawn over the planet. */
+	.ring.front {
+		stroke-dasharray: 50 50;
+	}
+
+	.ring.back {
+		opacity: 0.45;
+	}
+
+	.wire {
+		fill: none;
+		stroke: rgba(255, 150, 90, 0.75);
+		stroke-width: 0.9;
+	}
+</style>

@@ -96,7 +96,11 @@ const jsonLd = graph(
 		max-width: 30rem;
 		height: 320px;
 		border: 1px solid var(--border);
-		border-radius: 0.5rem;
+		border-radius: 2px;
 		background: #fff;
+	}
+
+	:global(html[data-mode='plain']) .substack-embed {
+		border-radius: 0.5rem;
 	}
 </style>

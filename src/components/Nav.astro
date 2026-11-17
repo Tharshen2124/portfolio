@@ -1,4 +1,5 @@
 ---
+import { site } from '../data/site';
 import { pagePath } from '../lib/seo';
 
 const links = [
@@ -12,33 +13,194 @@ const path = pagePath(Astro.url);
 const isActive = (href: string) => (href === '/' ? path === '/' : path.startsWith(href));
 ---
 
-<nav aria-label="Main">
-	{
-		links.map(({ href, label }) => (
-			<a href={href} aria-current={isActive(href) ? 'page' : undefined}>
-				{label}
-			</a>
-		))
-	}
-</nav>
+<header class="hud">
+	<a class="identity" href="/" aria-label={`${site.name}, home`}>
+		<svg class="emblem" viewBox="0 0 40 40" aria-hidden="true">
+			<circle cx="20" cy="20" r="13" />
+			<ellipse cx="20" cy="20" rx="19" ry="6" transform="rotate(-24 20 20)" />
+			<circle class="dot" cx="20" cy="20" r="3" />
+		</svg>
+		<span class="who">
+			<span class="name">{site.shortName}</span>
+			<span class="tagline">{site.tagline}</span>
+		</span>
+	</a>
+	<nav aria-label="Main">
+		{
+			links.map(({ href, label }) => (
+				<a href={href} aria-current={isActive(href) ? 'page' : undefined}>
+					{label}
+				</a>
+			))
+		}
+	</nav>
+</header>
 
 <style>
-	nav {
+	.hud {
+		position: fixed;
+		inset: 0 0 auto;
+		z-index: 20;
 		display: flex;
-		flex-wrap: wrap;
-		margin-left: -0.5rem;
+		align-items: center;
+		justify-content: space-between;
+		gap: 1rem 2rem;
+		height: var(--hud-height);
+		padding: 0 clamp(1.25rem, 4vw, 4.5rem);
+		background: linear-gradient(rgba(3, 5, 11, 0.9), rgba(3, 5, 11, 0.55) 60%, transparent);
+		text-transform: uppercase;
 	}
 
-	a {
-		padding: 0.25rem 0.5rem;
-		margin: 0.25rem 0.125rem;
+	.identity {
+		display: flex;
+		align-items: center;
+		gap: 0.85rem;
+		min-width: 0;
+		text-decoration: none;
+	}
+
+	.emblem {
+		flex: 0 0 auto;
+		width: 2.25rem;
+		height: 2.25rem;
+		fill: none;
+		stroke: var(--fg-strong);
+		stroke-width: 1.5;
+	}
+
+	.emblem .dot {
+		fill: var(--fg-strong);
+		stroke: none;
+	}
+
+	.who {
+		display: grid;
+		min-width: 0;
+		line-height: 1.2;
+	}
+
+	.name {
+		font-size: 1.125rem;
+		font-weight: 800;
+		letter-spacing: 0.06em;
+		color: var(--fg-strong);
+	}
+
+	.tagline {
+		font-size: 0.8125rem;
+		letter-spacing: 0.1em;
 		color: var(--muted);
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+
+	nav {
+		display: flex;
+		gap: clamp(0.75rem, 2vw, 2rem);
+	}
+
+	nav a {
+		position: relative;
+		padding: 0.4rem 0.1rem;
+		font-size: 0.875rem;
+		font-weight: 500;
+		letter-spacing: 0.1em;
+		color: var(--fg);
 		text-decoration: none;
 		transition: color 0.15s;
 	}
 
-	a:hover,
-	a[aria-current='page'] {
+	nav a::after {
+		content: '';
+		position: absolute;
+		inset: auto 0 -0.2rem;
+		height: 3px;
+		background: var(--fg-strong);
+		transform: scaleX(0);
+		transition: transform 0.2s ease-out;
+	}
+
+	nav a:hover,
+	nav a[aria-current='page'] {
+		color: var(--fg-strong);
+	}
+
+	nav a[aria-current='page'] {
+		font-weight: 700;
+	}
+
+	nav a:hover::after,
+	nav a[aria-current='page']::after {
+		transform: scaleX(1);
+	}
+
+	@media (max-width: 719px) {
+		.hud {
+			flex-direction: column;
+			align-items: flex-start;
+			justify-content: center;
+			gap: 0.5rem;
+			background: linear-gradient(rgba(3, 5, 11, 0.94), rgba(3, 5, 11, 0.8) 75%, transparent);
+		}
+
+		.emblem {
+			width: 1.75rem;
+			height: 1.75rem;
+		}
+
+		.name {
+			font-size: 0.9375rem;
+		}
+
+		.tagline {
+			font-size: 0.6875rem;
+		}
+
+		nav {
+			gap: 1.25rem;
+		}
+
+		nav a {
+			font-size: 0.75rem;
+		}
+	}
+
+	/* Plain mode: the original row of text links. */
+	:global(html[data-mode='plain']) .hud {
+		position: static;
+		display: block;
+		height: auto;
+		padding: 0;
+		background: none;
+		text-transform: none;
+	}
+
+	:global(html[data-mode='plain']) .identity {
+		display: none;
+	}
+
+	:global(html[data-mode='plain']) nav {
+		flex-wrap: wrap;
+		gap: 0;
+		margin-left: -0.5rem;
+	}
+
+	:global(html[data-mode='plain']) nav a {
+		padding: 0.25rem 0.5rem;
+		margin: 0.25rem 0.125rem;
+		font-size: inherit;
+		font-weight: inherit;
+		letter-spacing: normal;
+		color: var(--muted);
+	}
+
+	:global(html[data-mode='plain']) nav a::after {
+		content: none;
+	}
+
+	:global(html[data-mode='plain']) nav a:hover,
+	:global(html[data-mode='plain']) nav a[aria-current='page'] {
 		color: var(--fg-strong);
 	}
 </style>

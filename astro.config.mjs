@@ -23,5 +23,15 @@ export default defineConfig({
 			subsets: ['latin'],
 			fallbacks: ['sans-serif'],
 		},
+		{
+			// Wide-tracked serif for destination labels and page titles.
+			provider: fontProviders.fontsource(),
+			name: 'Cormorant Garamond',
+			cssVariable: '--font-display',
+			weights: [500],
+			styles: ['normal'],
+			subsets: ['latin'],
+			fallbacks: ['Georgia', 'serif'],
+		},
 	],
 });

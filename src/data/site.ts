@@ -1,6 +1,9 @@
 export const site = {
 	name: 'Tharshen A/L Surian Balan',
 	title: 'Tharshen A/L Surian Balan',
+	/** Compact forms for the top bar, where the full name doesn't fit. */
+	shortName: 'Tharshen Surian Balan',
+	tagline: 'DevOps · SRE · Observability',
 	url: 'https://tharshen.xyz',
 	locale: 'en_MY',
 	description:
