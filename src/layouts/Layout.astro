@@ -2,6 +2,7 @@
 import { Font } from 'astro:assets';
 import Nav from '../components/Nav.astro';
 import Footer from '../components/Footer.astro';
+import Space from '../components/Space.astro';
 import PostHog from '../components/posthog.astro';
 import { site } from '../data/site';
 import { absoluteUrl, defaultImage, pagePath, type JsonLd } from '../lib/seo';
@@ -16,6 +17,8 @@ interface Props {
 	/** Markdown copy of this page, advertised to agents via rel="alternate". */
 	markdownUrl?: string;
 	jsonLd?: JsonLd;
+	/** Skip the reading column so the page can lay itself out edge to edge. */
+	fullBleed?: boolean;
 }
 
 const {
@@ -25,6 +28,7 @@ const {
 	noindex = false,
 	markdownUrl,
 	jsonLd,
+	fullBleed = false,
 } = Astro.props;
 const pageTitle = title ? `${title} | ${site.title}` : site.title;
 const canonicalURL = absoluteUrl(pagePath(Astro.url));
@@ -46,8 +50,7 @@ const image = await defaultImage();
 		<meta name="author" content={site.name} />
 		{noindex && <meta name="robots" content="noindex" />}
 		<link rel="canonical" href={canonicalURL} />
-		<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
-		<meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)" />
+		<meta name="theme-color" content="#05070d" />
 
 		<meta property="og:title" content={pageTitle} />
 		<meta property="og:description" content={description} />
@@ -77,15 +80,15 @@ const image = await defaultImage();
 		{markdownUrl && <link rel="alternate" type="text/markdown" href={markdownUrl} />}
 		{jsonLd && <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />}
 		<Font cssVariable="--font-sans" preload />
+		<Font cssVariable="--font-display" preload />
 		<PostHog />
 	</head>
 	<body>
-		<div class="container">
-			<Nav />
-			<main>
-				<slot />
-			</main>
-			<Footer />
-		</div>
+		<Space dim={!fullBleed} />
+		<Nav />
+		<main class={fullBleed ? undefined : 'container'}>
+			<slot />
+		</main>
+		<Footer />
 	</body>
 </html>

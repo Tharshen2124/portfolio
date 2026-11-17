@@ -2,15 +2,18 @@
 import { Image } from 'astro:assets';
 import Layout from '../layouts/Layout.astro';
 import EntryList from '../components/EntryList.astro';
+import Planet, { type PlanetKind } from '../components/Planet.astro';
 import { site } from '../data/site';
 import { getExperience, experienceHref, type Experience } from '../lib/experience';
-import { getRecentProjects } from '../lib/projects';
+import { getProjects, getRecentProjects } from '../lib/projects';
 import { getSubstackFeed } from '../lib/substack';
-import { formatDay, formatMonth } from '../lib/format';
+import { formatDay, formatMonth, formatRange } from '../lib/format';
 import { defaultImage, graph, personSchema } from '../lib/seo';
+import { techIconPath } from '../lib/tech-icons';
 import portrait from '../assets/tharshen-avatar.jpg';
 
-const writeups = (await getExperience()).filter((entry) => experienceHref(entry));
+const experience = await getExperience();
+const writeups = experience.filter((entry) => experienceHref(entry));
 const toEntry = (entry: Experience) => ({
 	date: formatMonth(entry.data.startDate),
 	title: entry.data.title,
@@ -21,6 +24,7 @@ const volunteer = writeups
 	.filter((entry) => entry.data.category === 'volunteer' && entry.data.featured)
 	.map(toEntry);
 
+const allProjects = await getProjects();
 const projects = (await getRecentProjects()).slice(0, 3).map(({ data }) => ({
 	date: formatMonth(data.startDate),
 	title: data.name,
@@ -34,6 +38,143 @@ const writing = posts.slice(0, 3).map((post) => ({
 	href: post.url,
 }));
 
+/* ---- Star map ---- */
+
+interface Destination {
+	id: string;
+	label: string;
+	sub: string;
+	href: string;
+	kind: PlanetKind | 'portrait';
+	/** Centre of the planet, in percent of the map. */
+	x: number;
+	y: number;
+	/** Diameter in map units (the map is designed at 1920×1080). */
+	size: number;
+	/** Print the label across the planet instead of under it. */
+	over?: boolean;
+	card: { kicker: string; title: string; text: string };
+}
+
+const count = (n: number, noun: string) => `${n} ${noun}${n === 1 ? '' : 's'}`;
+const workCount = experience.filter((entry) => entry.data.category === 'work').length;
+const volunteerCount = experience.length - workCount;
+
+const hubs: Destination[] = [
+	{
+		id: 'about',
+		label: 'About',
+		sub: 'Start here',
+		href: '#about',
+		kind: 'portrait',
+		x: 50,
+		y: 40,
+		size: 196,
+		card: {
+			kicker: site.jobTitle,
+			title: site.shortName,
+			text: 'Computer Science student at Multimedia University, working towards DevOps and Site Reliability Engineering roles.',
+		},
+	},
+	{
+		id: 'experience',
+		label: 'Experience',
+		sub: `${count(workCount, 'role')} · ${volunteerCount} volunteer`,
+		href: '/experience',
+		kind: 'gas',
+		x: 28.5,
+		y: 45,
+		size: 262,
+		over: true,
+		card: {
+			kicker: 'Destination',
+			title: 'Experience',
+			text: "Where I've worked, and the societies and events I've volunteered for.",
+		},
+	},
+	{
+		id: 'projects',
+		label: 'Projects',
+		sub: count(allProjects.length, 'build'),
+		href: '/projects',
+		kind: 'rust',
+		x: 83.5,
+		y: 64,
+		size: 268,
+		over: true,
+		card: {
+			kicker: 'Destination',
+			title: 'Projects',
+			text: "Things I've built, mostly to learn DevOps, SRE and observability by doing.",
+		},
+	},
+	{
+		id: 'blog',
+		label: 'Blog',
+		sub: posts.length > 0 ? count(posts.length, 'post') : 'On Substack',
+		href: '/blog',
+		kind: 'eclipse',
+		x: 67.5,
+		y: 43,
+		size: 138,
+		card: {
+			kicker: 'Destination',
+			title: 'Blog',
+			text: 'Writing about Site Reliability, Observability and DevOps as I learn them.',
+		},
+	},
+];
+
+/** Write-ups given their own planet. Entries that no longer exist are skipped. */
+const slots: {
+	entry: string;
+	label: string;
+	kind: PlanetKind;
+	x: number;
+	y: number;
+	size: number;
+	over?: boolean;
+}[] = [
+	{ entry: 'ifast-global-hub-ai', label: 'iFAST', kind: 'ice', x: 13, y: 26, size: 200, over: true },
+	{ entry: 'moneylion', label: 'MoneyLion', kind: 'ember', x: 36.5, y: 19.5, size: 108 },
+	{ entry: 'it-society-president', label: 'IT Society', kind: 'violet', x: 69.5, y: 19, size: 112 },
+	{ entry: 'hackerspace-mmu-president', label: 'Hackerspace', kind: 'aurora', x: 87.5, y: 26, size: 176, over: true },
+	{ entry: 'barcamp-cyberjaya-2024', label: 'BarCamp', kind: 'moon', x: 18.5, y: 80, size: 330, over: true },
+];
+
+const outposts: Destination[] = slots.flatMap(({ entry: id, ...slot }) => {
+	const entry = writeups.find((candidate) => candidate.id === id);
+	if (!entry) return [];
+	const { title, category, startDate, endDate, summary } = entry.data;
+	return {
+		...slot,
+		id,
+		sub: `${category === 'work' ? 'Work' : 'Volunteer'} · ${startDate.getUTCFullYear()}`,
+		href: experienceHref(entry)!,
+		card: {
+			kicker: `${category === 'work' ? 'Work' : 'Volunteer'} · ${formatRange(startDate, endDate)}`,
+			title,
+			text: summary,
+		},
+	};
+});
+
+const destinations = [...hubs, ...outposts];
+
+/** One hexagon per project, each with a tool icon no other hexagon is using. */
+const usedIcons = new Set<string>();
+const hexes = allProjects.map(({ id, data }) => {
+	const tool = data.stack.find((name) => techIconPath(name) && !usedIcons.has(name));
+	if (tool) usedIcons.add(tool);
+	return { id, name: data.name, icon: tool && techIconPath(tool) };
+});
+
+const socials = [
+	{ href: site.links.github, label: 'GitHub' },
+	{ href: site.links.linkedin, label: 'LinkedIn' },
+	{ href: site.links.substack, label: 'Substack' },
+];
+
 const description =
 	'Computer Science student at Multimedia University aiming for DevOps and SRE roles, writing about observability. Ex-intern at iFAST Global Hub AI and MoneyLion.';
 const jsonLd = graph({
@@ -45,76 +186,692 @@ const jsonLd = graph({
 });
 ---
 
-<Layout description={description} type="profile" jsonLd={jsonLd}>
-	<header class="intro">
-		<Image
-			class="portrait"
-			src={portrait}
-			alt={`Portrait of ${site.name}`}
-			width={96}
-			height={96}
-			densities={[1, 2]}
-			fit="cover"
-			loading="eager"
-		/>
-		<h1 class="page-title">{site.name}</h1>
-	</header>
-	<p class="lede">
-		I'm a Computer Science student at Multimedia University working towards DevOps and Site
-		Reliability Engineering roles. I've interned as a full stack engineer at <a
-			href="/experience/ifast-global-hub-ai">iFAST Global Hub AI</a
-		> and as a web engineer at <a href="/experience/moneylion">MoneyLion</a>. Outside of work, I've
-		spent most of my time at university building communities: I was President of <a
-			href="/experience/it-society-president">IT Society</a
-		> and <a href="/experience/hackerspace-mmu-president">Hackerspace MMU</a>, and directed <a
-			href="/experience/barcamp-cyberjaya-2024">BarCamp Cyberjaya</a
-		>. These days I'm learning observability with OpenTelemetry and the VictoriaMetrics stack, and
-		writing about what I learn on <a href="/blog">my blog</a>.
-	</p>
+<Layout description={description} type="profile" jsonLd={jsonLd} fullBleed>
+	<section class="map" aria-label="Destinations">
+		<div class="horizon" aria-hidden="true"></div>
 
-	<h2 class="section-title">Experience</h2>
-	<EntryList entries={work} />
-	<a class="more-link" href="/experience#work">all experience →</a>
+		<ul class="destinations">
+			{
+				destinations.map(({ id, label, sub, href, kind, x, y, size, over, card }, i) => (
+					<li
+						class:list={['node', { over, flip: x > 58 }]}
+						style={`--x:${x}; --y:${y}; --size:${size}; --i:${i}; --depth:${Math.round(size / 14)}`}
+					>
+						<a href={href} aria-describedby={`card-${id}`}>
+							<span class="orb">
+								{kind === 'portrait' ? (
+									<Image
+										class="portrait"
+										src={portrait}
+										alt=""
+										width={200}
+										height={200}
+										densities={[1, 2]}
+										fit="cover"
+										loading="eager"
+									/>
+								) : (
+									<Planet kind={kind} id={`planet-${id}`} />
+								)}
+							</span>
+							<span class="label">
+								<span class="name">{label}</span>
+								<span class="sub">{sub}</span>
+							</span>
+							<span class="card" id={`card-${id}`} role="tooltip">
+								<span class="kicker">{card.kicker}</span>
+								<span class="card-title">{card.title}</span>
+								<span class="card-text">{card.text}</span>
+								<span class="card-action">{href.startsWith('#') ? 'Scroll down' : 'Open'}</span>
+							</span>
+						</a>
+					</li>
+				))
+			}
+		</ul>
 
-	<h2 class="section-title">Recent Projects</h2>
-	<EntryList entries={projects} />
-	<a class="more-link" href="/projects">all projects →</a>
+		<ul class="hexes" aria-label="Projects">
+			{
+				hexes.map(({ id, name, icon }) => (
+					<li>
+						<a href={`/projects#${id}`} aria-label={name}>
+							<svg viewBox="0 0 100 100" aria-hidden="true">
+								<polygon class="hex" points="50,3 91,26.5 91,73.5 50,97 9,73.5 9,26.5" />
+								<polygon class="hex inner" points="50,11 84,30.5 84,69.5 50,89 16,69.5 16,30.5" />
+								{icon ? (
+									<path class="glyph" d={icon} transform="translate(32 32) scale(1.5)" />
+								) : (
+									<rect class="glyph" x="38" y="38" width="24" height="24" transform="rotate(45 50 50)" />
+								)}
+							</svg>
+							<span class="hex-name">{name}</span>
+						</a>
+					</li>
+				))
+			}
+		</ul>
 
-	<h2 class="section-title">Volunteer Highlights</h2>
-	<EntryList entries={volunteer} />
-	<a class="more-link" href="/experience#volunteer">all volunteer experience →</a>
+		<ul class="socials" aria-label="Profiles">
+			{
+				socials.map(({ href, label }) => (
+					<li>
+						<a
+							href={href}
+							target="_blank"
+							rel="noopener noreferrer"
+							data-posthog-social-profile={label.toLowerCase()}
+						>
+							{label}
+						</a>
+					</li>
+				))
+			}
+		</ul>
+	</section>
 
-	{
-		writing.length > 0 && (
-			<>
-				<h2 class="section-title">Writing</h2>
-				<EntryList entries={writing} />
-				<a class="more-link" href="/blog">
-					all posts →
-				</a>
-			</>
-		)
-	}
+	<section id="about" class="about">
+		<div class="intro">
+			<header class="intro-head">
+				<Image
+					class="avatar"
+					src={portrait}
+					alt={`Portrait of ${site.name}`}
+					width={96}
+					height={96}
+					densities={[1, 2]}
+					fit="cover"
+				/>
+				<h1 class="page-title">{site.name}</h1>
+			</header>
+			<p class="lede">
+				I'm a Computer Science student at Multimedia University working towards DevOps and Site
+				Reliability Engineering roles. I've interned as a full stack engineer at <a
+					href="/experience/ifast-global-hub-ai">iFAST Global Hub AI</a
+				> and as a web engineer at <a href="/experience/moneylion">MoneyLion</a>. Outside of work,
+				I've spent most of my time at university building communities: I was President of <a
+					href="/experience/it-society-president">IT Society</a
+				> and <a href="/experience/hackerspace-mmu-president">Hackerspace MMU</a>, and directed <a
+					href="/experience/barcamp-cyberjaya-2024">BarCamp Cyberjaya</a
+				>. These days I'm learning observability with OpenTelemetry and the VictoriaMetrics stack,
+				and writing about what I learn on <a href="/blog">my blog</a>.
+			</p>
+		</div>
+
+		<div class="logs">
+			<section>
+				<h2 class="section-title">Experience</h2>
+				<EntryList entries={work} />
+				<a class="more-link" href="/experience#work">all experience →</a>
+			</section>
+
+			<section>
+				<h2 class="section-title">Recent Projects</h2>
+				<EntryList entries={projects} />
+				<a class="more-link" href="/projects">all projects →</a>
+			</section>
+
+			<section>
+				<h2 class="section-title">Volunteer Highlights</h2>
+				<EntryList entries={volunteer} />
+				<a class="more-link" href="/experience#volunteer">all volunteer experience →</a>
+			</section>
+
+			{
+				writing.length > 0 && (
+					<section>
+						<h2 class="section-title">Writing</h2>
+						<EntryList entries={writing} />
+						<a class="more-link" href="/blog">
+							all posts →
+						</a>
+					</section>
+				)
+			}
+		</div>
+	</section>
 </Layout>
 
+<script>
+	// Drift the planets against the pointer; nearer (larger) ones move further.
+	const map = document.querySelector<HTMLElement>('.map');
+	const still = window.matchMedia('(prefers-reduced-motion: reduce)');
+	const fine = window.matchMedia('(hover: hover) and (pointer: fine)');
+
+	if (map && !still.matches && fine.matches) {
+		let frame = 0;
+		map.addEventListener('pointermove', (event) => {
+			cancelAnimationFrame(frame);
+			frame = requestAnimationFrame(() => {
+				const box = map.getBoundingClientRect();
+				map.style.setProperty('--mx', ((event.clientX - box.left) / box.width - 0.5).toFixed(3));
+				map.style.setProperty('--my', ((event.clientY - box.top) / box.height - 0.5).toFixed(3));
+			});
+		});
+	}
+</script>
+
 <style>
+	/* ---- Map ---- */
+
+	.map {
+		/* One map unit: the design is drawn at 1920×1080 and scales to fit. */
+		--u: calc(min(100vw, 177.78svh) / 1920);
+		--mx: 0;
+		--my: 0;
+		position: relative;
+		height: 100svh;
+		min-height: 34rem;
+		overflow: hidden;
+	}
+
+	/* The limb of a world at the bottom of the chart, lit from behind. */
+	.horizon {
+		position: absolute;
+		left: 50%;
+		top: 76%;
+		width: calc(2100 * var(--u));
+		aspect-ratio: 1;
+		translate: -50% 0;
+		border-radius: 50%;
+		background:
+			radial-gradient(42% 16% at 50% 0%, rgba(255, 214, 150, 0.5), transparent 70%),
+			radial-gradient(circle at 50% 0%, #35588e 0%, #142848 16%, #080f1f 34%, #05070d 52%);
+		box-shadow:
+			0 calc(-6 * var(--u)) calc(40 * var(--u)) rgba(150, 190, 255, 0.4),
+			0 calc(-30 * var(--u)) calc(160 * var(--u)) rgba(255, 190, 120, 0.22),
+			inset 0 calc(10 * var(--u)) calc(30 * var(--u)) rgba(200, 225, 255, 0.45);
+	}
+
+	.destinations,
+	.hexes,
+	.socials {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+	}
+
+	.node {
+		position: absolute;
+		left: calc(var(--x) * 1%);
+		top: calc(var(--y) * 1%);
+		width: calc(var(--size) * var(--u));
+		aspect-ratio: 1;
+		translate: calc(-50% - var(--mx) * var(--depth) * 1px)
+			calc(-50% - var(--my) * var(--depth) * 1px);
+		transition: translate 0.5s cubic-bezier(0.2, 0.7, 0.2, 1);
+		animation: arrive 0.9s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+		animation-delay: calc(var(--i) * 70ms + 100ms);
+	}
+
+	@keyframes arrive {
+		from {
+			opacity: 0;
+			scale: 0.86;
+		}
+	}
+
+	.node:hover,
+	.node:focus-within {
+		z-index: 5;
+	}
+
+	.node a {
+		display: block;
+		width: 100%;
+		height: 100%;
+		border-radius: 50%;
+		color: inherit;
+		text-decoration: none;
+		outline: none;
+	}
+
+	.orb {
+		position: relative;
+		display: block;
+		width: 100%;
+		height: 100%;
+		transition: scale 0.35s cubic-bezier(0.2, 0.7, 0.2, 1);
+	}
+
+	/* Orbit lines: a hairline close in, a dashed one further out. */
+	.orb::before,
+	.orb::after {
+		content: '';
+		position: absolute;
+		border-radius: 50%;
+		pointer-events: none;
+		transition:
+			border-color 0.3s,
+			scale 0.35s cubic-bezier(0.2, 0.7, 0.2, 1);
+	}
+
+	.orb::before {
+		inset: -7%;
+		border: 1px solid rgba(200, 215, 245, 0.16);
+	}
+
+	.orb::after {
+		inset: -21%;
+		border: 1px dashed rgba(200, 215, 245, 0.12);
+		animation: orbit 90s linear infinite;
+	}
+
+	@keyframes orbit {
+		to {
+			rotate: 360deg;
+		}
+	}
+
+	a:hover .orb,
+	a:focus-visible .orb {
+		scale: 1.06;
+	}
+
+	a:hover .orb::before,
+	a:focus-visible .orb::before {
+		border-color: rgba(255, 255, 255, 0.85);
+	}
+
+	a:hover .orb::after,
+	a:focus-visible .orb::after {
+		border-color: rgba(255, 255, 255, 0.4);
+		scale: 0.94;
+	}
+
+	.portrait {
+		position: absolute;
+		inset: 15%;
+		width: 70%;
+		height: 70%;
+		border-radius: 50%;
+		object-fit: cover;
+		filter: grayscale(0.35) contrast(1.05);
+		box-shadow:
+			0 0 0 1px rgba(255, 255, 255, 0.55),
+			0 0 calc(50 * var(--u)) rgba(232, 214, 255, 0.55),
+			0 0 calc(120 * var(--u)) rgba(190, 160, 255, 0.3);
+	}
+
+	.label {
+		position: absolute;
+		left: 50%;
+		top: 92%;
+		translate: -50% 0;
+		display: grid;
+		justify-items: center;
+		gap: 0.3em;
+		white-space: nowrap;
+		text-transform: uppercase;
+		text-shadow:
+			0 0 0.5em rgba(0, 0, 0, 0.9),
+			0 0 1.5em rgba(0, 0, 0, 0.7);
+		pointer-events: none;
+	}
+
+	.over .label {
+		top: 50%;
+		translate: -50% -35%;
+	}
+
+	.name {
+		font-family: var(--font-display), Georgia, serif;
+		font-size: clamp(0.8rem, calc(21 * var(--u)), 1.5rem);
+		font-weight: 500;
+		line-height: 1.2;
+		letter-spacing: 0.5em;
+		/* Trailing letter-spacing would push the word off-centre. */
+		margin-right: -0.5em;
+		color: rgba(244, 246, 250, 0.86);
+		transition: color 0.2s;
+	}
+
+	.sub {
+		display: flex;
+		align-items: center;
+		gap: 0.6em;
+		font-size: clamp(0.5625rem, calc(11.5 * var(--u)), 0.8rem);
+		font-weight: 500;
+		letter-spacing: 0.16em;
+		color: rgba(201, 208, 220, 0.62);
+	}
+
+	.sub::before {
+		content: '';
+		width: 0.5em;
+		height: 0.5em;
+		rotate: 45deg;
+		background: var(--accent);
+	}
+
+	a:hover .name,
+	a:focus-visible .name {
+		color: #fff;
+	}
+
+	/* Detail card, shown beside the planet under the pointer. */
+	.card {
+		position: absolute;
+		left: calc(100% + 1.5rem);
+		top: 50%;
+		translate: -0.5rem -50%;
+		display: grid;
+		gap: 0.35rem;
+		width: 19rem;
+		padding: 1rem 1.1rem 0.9rem;
+		border-top: 3px solid var(--fg-strong);
+		background: rgba(8, 11, 20, 0.97);
+		box-shadow: 0 1rem 3rem rgba(0, 0, 0, 0.6);
+		opacity: 0;
+		visibility: hidden;
+		pointer-events: none;
+		transition:
+			opacity 0.2s,
+			translate 0.25s cubic-bezier(0.2, 0.7, 0.2, 1),
+			visibility 0.2s;
+	}
+
+	.flip .card {
+		left: auto;
+		right: calc(100% + 1.5rem);
+		translate: 0.5rem -50%;
+	}
+
+	a:hover .card,
+	a:focus-visible .card {
+		opacity: 1;
+		visibility: visible;
+		translate: 0 -50%;
+	}
+
+	.kicker {
+		font-size: 0.6875rem;
+		font-weight: 600;
+		letter-spacing: 0.16em;
+		text-transform: uppercase;
+		color: var(--accent);
+	}
+
+	.card-title {
+		font-size: 1.0625rem;
+		font-weight: 700;
+		line-height: 1.3;
+		color: var(--fg-strong);
+	}
+
+	.card-text {
+		font-size: 0.875rem;
+		line-height: 1.5;
+		color: var(--fg);
+	}
+
+	.card-action {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		margin-top: 0.5rem;
+		padding-top: 0.6rem;
+		border-top: 1px solid var(--line);
+		font-size: 0.6875rem;
+		font-weight: 600;
+		letter-spacing: 0.16em;
+		text-transform: uppercase;
+		color: var(--muted);
+	}
+
+	.card-action::before {
+		content: '';
+		width: 0.7rem;
+		height: 0.7rem;
+		border: 1px solid var(--muted);
+		border-radius: 50%;
+		background: radial-gradient(var(--fg-strong) 30%, transparent 36%);
+	}
+
+	/* ---- Project hexagons ---- */
+
+	.hexes {
+		position: absolute;
+		left: 50%;
+		bottom: calc(52 * var(--u));
+		translate: -50% 0;
+		display: flex;
+		gap: calc(26 * var(--u));
+		animation: arrive 0.9s 0.9s both;
+	}
+
+	/* The line the hexagons are threaded on. */
+	.hexes::before {
+		content: '';
+		position: absolute;
+		inset: 50% -1.25rem auto;
+		height: 1px;
+		background: rgba(200, 215, 245, 0.3);
+	}
+
+	.hexes li {
+		position: relative;
+	}
+
+	.hexes a {
+		display: block;
+		width: clamp(3rem, calc(98 * var(--u)), 6.5rem);
+		transition: scale 0.25s cubic-bezier(0.2, 0.7, 0.2, 1);
+	}
+
+	.hexes svg {
+		display: block;
+		overflow: visible;
+	}
+
+	.hex {
+		fill: rgba(9, 14, 28, 0.9);
+		stroke: rgba(200, 215, 245, 0.55);
+		stroke-width: 1.5;
+		transition:
+			stroke 0.2s,
+			fill 0.2s;
+	}
+
+	.hex.inner {
+		fill: rgba(60, 84, 130, 0.25);
+		stroke: rgba(200, 215, 245, 0.2);
+		stroke-width: 1;
+	}
+
+	.glyph {
+		fill: rgba(244, 246, 250, 0.85);
+	}
+
+	.hexes a:hover,
+	.hexes a:focus-visible {
+		scale: 1.1;
+	}
+
+	.hexes a:hover .hex,
+	.hexes a:focus-visible .hex {
+		stroke: #fff;
+	}
+
+	.hexes a:hover .hex.inner,
+	.hexes a:focus-visible .hex.inner {
+		fill: rgba(95, 214, 201, 0.3);
+	}
+
+	.hex-name {
+		position: absolute;
+		left: 50%;
+		bottom: calc(100% + 0.6rem);
+		translate: -50% 0.25rem;
+		padding: 0.3rem 0.7rem;
+		border-top: 2px solid var(--fg-strong);
+		background: rgba(8, 11, 20, 0.92);
+		font-size: 0.75rem;
+		font-weight: 600;
+		letter-spacing: 0.06em;
+		white-space: nowrap;
+		color: var(--fg-strong);
+		opacity: 0;
+		pointer-events: none;
+		transition:
+			opacity 0.2s,
+			translate 0.2s;
+	}
+
+	.hexes a:hover .hex-name,
+	.hexes a:focus-visible .hex-name {
+		opacity: 1;
+		translate: -50% 0;
+	}
+
+	/* ---- Profile links, bottom right ---- */
+
+	.socials {
+		position: absolute;
+		right: clamp(1.25rem, 4vw, 4.5rem);
+		bottom: calc(28 * var(--u));
+		display: flex;
+		gap: 1.5rem;
+		font-size: clamp(0.8125rem, calc(22 * var(--u)), 1.125rem);
+	}
+
+	.socials a {
+		color: var(--fg-strong);
+		text-decoration: none;
+		transition: color 0.15s;
+	}
+
+	.socials a:hover {
+		color: var(--accent);
+	}
+
+	/* ---- About, below the map ---- */
+
+	.about {
+		max-width: 68rem;
+		margin: 0 auto;
+		padding: 5rem 1.25rem 0;
+	}
+
 	.intro {
+		max-width: 40rem;
+	}
+
+	.intro-head {
 		display: flex;
 		align-items: center;
 		gap: 1.25rem;
 		margin-bottom: 2rem;
 	}
 
-	.intro .page-title {
+	.intro-head .page-title {
+		flex: 1;
 		margin: 0;
 	}
 
-	.portrait {
+	.avatar {
 		flex: 0 0 auto;
-		width: 6rem;
-		height: 6rem;
-		border-radius: 0.75rem;
+		width: 5.5rem;
+		height: 5.5rem;
+		border-radius: 50%;
 		object-fit: cover;
 		filter: grayscale(1);
+		box-shadow: 0 0 0 1px var(--border);
+	}
+
+	.logs {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(min(100%, 26rem), 1fr));
+		gap: 0 4rem;
+	}
+
+	/* ---- Small screens: the chart becomes a two-column field of planets ---- */
+
+	@media (max-width: 819px), (max-height: 539px) {
+		.map {
+			--u: 0.5px;
+			height: auto;
+			min-height: 0;
+			padding: calc(var(--hud-height) + 1.5rem) 1rem 2.5rem;
+		}
+
+		.horizon {
+			display: none;
+		}
+
+		.destinations {
+			display: grid;
+			grid-template-columns: repeat(2, minmax(0, 1fr));
+			align-items: center;
+			justify-items: center;
+			gap: 4rem 0.5rem;
+		}
+
+		/* An odd planet out sits centred rather than alone in the left column. */
+		.node:last-child:nth-child(odd) {
+			grid-column: 1 / -1;
+		}
+
+		.node {
+			position: relative;
+			left: auto;
+			top: auto;
+			width: min(calc(var(--size) * 0.22px + 4.25rem), 34vw);
+			translate: none;
+		}
+
+		/* Stagger the columns so it reads as a sky, not a table. */
+		.node:nth-child(even) {
+			top: 2rem;
+		}
+
+		.node .label,
+		.over .label {
+			top: 96%;
+			translate: -50% 0;
+		}
+
+		.name {
+			font-size: 0.8125rem;
+			letter-spacing: 0.32em;
+			margin-right: -0.32em;
+		}
+
+		.card {
+			display: none;
+		}
+
+		.hexes {
+			position: relative;
+			left: auto;
+			bottom: auto;
+			translate: none;
+			justify-content: center;
+			gap: 0.75rem;
+			margin-top: 6.5rem;
+		}
+
+		.hexes a {
+			width: 3.75rem;
+		}
+
+		.hex-name {
+			display: none;
+		}
+
+		.socials {
+			position: static;
+			justify-content: center;
+			margin-top: 2rem;
+			font-size: 0.875rem;
+		}
+
+		.about {
+			padding-top: 3rem;
+		}
+
+		.avatar {
+			width: 4rem;
+			height: 4rem;
+		}
 	}
 </style>
