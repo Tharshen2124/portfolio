@@ -1,172 +1,1066 @@
 ---
 /**
- * A procedurally drawn planet: gradient sphere, turbulence for surface detail,
- * a terminator shadow and an atmosphere halo. No image assets.
+ * A procedurally drawn planet, lit from one side like a world on a star chart.
+ *
+ * Every layer is SVG, no image assets: noise mapped through a colour ramp for
+ * the ground, embossed toward the light for relief, a terminator falling into a
+ * tinted night side, an atmosphere that scatters light along the lit limb and
+ * bleeds out into space, and weather of its own for each kind of world.
+ *
+ * Effects that move live in their own <svg>, so the browser turns them on the
+ * compositor instead of re-running the filters every frame. They only move
+ * while their planet is hovered: an idle map renders no frames.
  */
 export type PlanetKind =
-	| 'ice'
-	| 'gas'
-	| 'ember'
-	| 'eclipse'
-	| 'aurora'
-	| 'rust'
+	| 'frost'
+	| 'magma'
+	| 'mist'
+	| 'aura'
+	| 'storm'
+	| 'desert'
 	| 'moon'
-	| 'violet';
+	| 'eclipse';
 
 interface Props {
 	kind: PlanetKind;
 	/** Unique per page; namespaces the SVG gradient and filter ids. */
 	id: string;
+	/** Where the light comes from, in degrees clockwise from three o'clock. */
+	light?: number;
 }
 
 interface Look {
-	light: string;
-	mid: string;
-	dark: string;
-	glow: string;
+	/** Ground colours, from the lowest land to the highest. */
+	ramp: string[];
 	/** feTurbulence baseFrequency; two values stretch the noise into bands. */
 	frequency: string;
 	seed: number;
-	texture: number;
+	/** Noise detail: fewer octaves give smoother cloud bands. */
+	octaves: number;
+	/** How hard the noise is pushed across the ramp. */
+	contrast: number;
+	/** How far, in map units, the ground is embossed toward the light. 0 for worlds with no surface. */
+	relief: number;
+	/** How strongly bands are curled into eddies. */
+	swirl: number;
+	/** Atmosphere colour, for the lit limb and the glow into space. */
+	air: string;
+	/** Strength of the glow thrown out into space. */
+	glow: number;
+	/** Strength of the light scattered along the limb. */
+	rim: number;
+	/** Sunlit highlight. */
+	sheen: string;
+	shine: number;
+	/** Night side tint, and how dark it gets. */
+	night: string;
+	dark: number;
 }
 
 const looks: Record<PlanetKind, Look> = {
-	ice: { light: '#c3d2ea', mid: '#5f7396', dark: '#141b2e', glow: '#8fb0e8', frequency: '0.018', seed: 4, texture: 0.9 },
-	gas: { light: '#8ab4f2', mid: '#2f58b0', dark: '#0a1438', glow: '#5c8cf0', frequency: '0.006 0.07', seed: 11, texture: 0.8 },
-	ember: { light: '#f0937a', mid: '#a43a34', dark: '#260a0c', glow: '#ff6a5c', frequency: '0.02 0.035', seed: 7, texture: 1 },
-	eclipse: { light: '#0a0c14', mid: '#05060b', dark: '#000000', glow: '#a9b8ff', frequency: '0.03', seed: 1, texture: 0 },
-	aurora: { light: '#7ff0d6', mid: '#1f7f8c', dark: '#06202c', glow: '#62f0cf', frequency: '0.012 0.03', seed: 19, texture: 1 },
-	rust: { light: '#f09a58', mid: '#b04a1e', dark: '#2c0d05', glow: '#ff8a4a', frequency: '0.022', seed: 23, texture: 0.9 },
-	moon: { light: '#d8dade', mid: '#7c8088', dark: '#15161a', glow: '#c9d2e6', frequency: '0.045', seed: 31, texture: 1 },
-	violet: { light: '#d9b8f6', mid: '#7a4cc0', dark: '#190c38', glow: '#b58cff', frequency: '0.01 0.045', seed: 13, texture: 0.85 },
+	frost: {
+		ramp: ['#0e2342', '#1f4874', '#3a72a3', '#6fa0cb', '#a9cdea', '#d6ebf9', '#f4fbff'],
+		frequency: '0.009',
+		seed: 4,
+		octaves: 4,
+		contrast: 1.7,
+		relief: 2,
+		swirl: 0,
+		air: '#bfe4ff',
+		glow: 0.8,
+		rim: 1,
+		sheen: '#ffffff',
+		shine: 0.4,
+		night: '#020a1a',
+		dark: 0.93,
+	},
+	magma: {
+		ramp: ['#050101', '#120403', '#250906', '#3d1009', '#5c1b0c', '#7f2c12', '#a5451d'],
+		frequency: '0.026',
+		seed: 7,
+		octaves: 5,
+		contrast: 2.2,
+		relief: 2.5,
+		swirl: 0,
+		air: '#ff7434',
+		glow: 0.95,
+		rim: 1,
+		sheen: '#ffb06a',
+		shine: 0.5,
+		night: '#160302',
+		dark: 0.9,
+	},
+	mist: {
+		ramp: ['#020823', '#08184a', '#11307a', '#1d4ca6', '#3b70cc', '#78a3e8', '#c2d9fb'],
+		frequency: '0.003 0.034',
+		seed: 11,
+		octaves: 3,
+		contrast: 1.7,
+		relief: 0,
+		swirl: 12,
+		air: '#8fb9ff',
+		glow: 0.65,
+		rim: 0.9,
+		sheen: '#d6e6ff',
+		shine: 0.3,
+		night: '#01041a',
+		dark: 0.92,
+	},
+	aura: {
+		ramp: ['#010a0d', '#032026', '#063b43', '#0d6163', '#1d8e83', '#4cc4a7', '#a5f4d8'],
+		frequency: '0.007 0.022',
+		seed: 19,
+		octaves: 3,
+		contrast: 2.3,
+		relief: 0,
+		swirl: 26,
+		air: '#5ff5d0',
+		glow: 1.2,
+		rim: 1,
+		sheen: '#c8fff0',
+		shine: 0.3,
+		night: '#010e10',
+		dark: 0.88,
+	},
+	storm: {
+		ramp: ['#04020d', '#110830', '#24135c', '#3b2591', '#5f43c0', '#9277e0', '#d2c2ff'],
+		frequency: '0.005 0.04',
+		seed: 13,
+		octaves: 3,
+		contrast: 2,
+		relief: 0,
+		swirl: 20,
+		air: '#c3a2ff',
+		glow: 0.6,
+		rim: 0.9,
+		sheen: '#ece2ff',
+		shine: 0.3,
+		night: '#05020f',
+		dark: 0.92,
+	},
+	desert: {
+		ramp: ['#130502', '#2c0c04', '#521a07', '#80310f', '#ad5520', '#d6843f', '#f0b67a'],
+		frequency: '0.013',
+		seed: 23,
+		octaves: 5,
+		contrast: 2.2,
+		relief: 2.5,
+		swirl: 0,
+		air: '#ffa060',
+		glow: 0.5,
+		rim: 0.85,
+		sheen: '#ffd2a0',
+		shine: 0.3,
+		night: '#0e0402',
+		dark: 0.92,
+	},
+	moon: {
+		ramp: ['#0b0b0d', '#232428', '#3d3f44', '#5e6168', '#858890', '#aeb1b8', '#d6d8dc'],
+		frequency: '0.018',
+		seed: 31,
+		octaves: 5,
+		contrast: 1.9,
+		relief: 2.5,
+		swirl: 0,
+		air: '#d0d8ea',
+		glow: 0.3,
+		rim: 0.45,
+		sheen: '#ffffff',
+		shine: 0.16,
+		night: '#040405',
+		dark: 0.95,
+	},
+	eclipse: {
+		ramp: ['#000000', '#010103', '#030409', '#06070f', '#090b16', '#0d1020', '#11152a'],
+		frequency: '0.02',
+		seed: 1,
+		octaves: 3,
+		contrast: 1.6,
+		relief: 0,
+		swirl: 0,
+		air: '#dfe4ff',
+		glow: 0,
+		rim: 0,
+		sheen: '#000000',
+		shine: 0,
+		night: '#000000',
+		dark: 0.6,
+	},
 };
 
-const { kind, id } = Astro.props;
+const { kind, id, light = -45 } = Astro.props;
 const look = looks[kind];
-const ref = (name: string) => `url(#${id}-${name})`;
+const key = (name: string) => `${id}-${name}`;
+const url = (name: string) => `url(#${key(name)})`;
+
+const round = (n: number) => Number(n.toFixed(2));
+const radians = (degrees: number) => (degrees * Math.PI) / 180;
+/** Unit vector toward the light. */
+const lx = Math.cos(radians(light));
+const ly = Math.sin(radians(light));
+/** Lighting layers are drawn lit from the right, then turned to face the light. */
+const turn = `rotate(${round(light)} 120 120)`;
+
+const rgb = (hex: string) => [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255);
+/** feFunc table for one channel of the ground ramp. */
+const table = (channel: number) => look.ramp.map((hex) => rgb(hex)[channel].toFixed(3)).join(' ');
+/** Colour matrix painting a flat colour, its alpha a linear function of the red channel. */
+const paint = (hex: string, slope: number, offset: number) => {
+	const [r, g, b] = rgb(hex).map((v) => v.toFixed(3));
+	return `0 0 0 0 ${r}  0 0 0 0 ${g}  0 0 0 0 ${b}  ${slope} 0 0 0 ${offset}`;
+};
+/** Two matrices whose product is a thin line along the noise's midpoint contour. */
+const contour = (hex: string, sharpness: number, width = 1.5) => [
+	paint(hex, sharpness, width - sharpness / 2),
+	paint(hex, -sharpness, width + sharpness / 2),
+];
+
+/** Seeded, so a planet looks the same on every build. */
+function seeded(seed: number) {
+	return () => {
+		seed = (seed + 0x6d2b79f5) | 0;
+		let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+		t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+		return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+	};
+}
+
+const contrast = look.contrast;
+const lift = round(0.5 - contrast / 2);
+
+/** Craters, squashed toward the limb and shaded from the light. */
+const craters: {
+	x: number;
+	y: number;
+	rx: number;
+	ry: number;
+	tilt: number;
+	/** Vector toward the light in the crater's own frame. */
+	gx: number;
+	gy: number;
+	width: number;
+}[] = [];
+if (kind === 'moon') {
+	const random = seeded(look.seed);
+	while (craters.length < 20) {
+		const x = 20 + random() * 200;
+		const y = 20 + random() * 200;
+		const reach = Math.hypot(x - 120, y - 120) / 100;
+		if (reach > 0.9) continue;
+		const r = 2.5 + random() ** 2.4 * 17;
+		const tilt = (Math.atan2(y - 120, x - 120) * 180) / Math.PI;
+		const local = radians(light - tilt);
+		craters.push({
+			x: round(x),
+			y: round(y),
+			rx: round(r * Math.max(Math.sqrt(1 - reach * reach), 0.25)),
+			ry: round(r),
+			tilt: round(tilt),
+			gx: round(Math.cos(local) * r),
+			gy: round(Math.sin(local) * r),
+			width: round(0.5 + r * 0.07),
+		});
+	}
+}
+
+/** Coronal streamers around the eclipse. */
+const streamers: { angle: number; length: number; width: number; opacity: number }[] = [];
+if (kind === 'eclipse') {
+	const random = seeded(77);
+	for (let i = 0; i < 84; i++) {
+		streamers.push({
+			angle: round((i / 84) * 360 + random() * 4),
+			length: round(5 + random() ** 3 * 44),
+			width: round(0.8 + random() * 2.2),
+			opacity: round(0.14 + random() * 0.34),
+		});
+	}
+}
+
+/** Where the eclipse's diamond ring catches: the limb nearest the light. */
+const bead = { x: round(120 + 99 * lx), y: round(120 + 99 * ly) };
+
+/** Ring bands around the misty giant, inner to outer. */
+const bands = [
+	{ rx: 125, width: 1.1, opacity: 0.4 },
+	{ rx: 132, width: 5, opacity: 0.3 },
+	{ rx: 138.5, width: 1.6, opacity: 0.6 },
+	{ rx: 144.5, width: 3.6, opacity: 0.24 },
+	{ rx: 151, width: 0.8, opacity: 0.6 },
+];
+
+/** Lightning on the storm world's night side, in the light's frame (light from the right). */
+const flashes = [
+	{ x: 58, y: 96, r: 1 },
+	{ x: 66, y: 152, r: 0.8 },
+	{ x: 42, y: 128, r: 0.6 },
+	{ x: 86, y: 178, r: 0.7 },
+	{ x: 92, y: 60, r: 0.9 },
+];
+
+/** Haze wrapped round the limb, thickest on the lit side. */
+interface Haze {
+	frequency: string;
+	seed: number;
+	color: string;
+	blur: number;
+	/** Opacity by distance from the centre, as [offset of 148 units, opacity]. */
+	stops: [number, number][];
+}
+const hazes: Partial<Record<PlanetKind, Haze>> = {
+	mist: {
+		frequency: '0.011',
+		seed: 3,
+		color: '#d6e5ff',
+		blur: 2.4,
+		stops: [
+			[0.52, 0],
+			[0.64, 1],
+			[0.76, 0.6],
+			[0.95, 0],
+		],
+	},
+	frost: {
+		frequency: '0.035',
+		seed: 8,
+		color: '#e8f5ff',
+		blur: 1,
+		stops: [
+			[0.62, 0],
+			[0.68, 0.5],
+			[0.72, 0.2],
+			[0.8, 0],
+		],
+	},
+};
+const haze = hazes[kind];
+
+/** Bright bands of the aura, wound around the planet at different tilts. */
+const ribbons = [
+	{ rx: 138, ry: 104, tilt: -24, color: '#63f7d4', width: 1.6, dash: '40 60', offset: 8 },
+	{ rx: 128, ry: 106, tilt: 40, color: '#a6ffb0', width: 1.1, dash: '32 68', offset: 52 },
+	{ rx: 148, ry: 102, tilt: 76, color: '#ff8bdc', width: 1.2, dash: '26 74', offset: 30 },
+	{ rx: 122, ry: 108, tilt: 150, color: '#7ec8ff', width: 0.9, dash: '36 64', offset: 70 },
+	{ rx: 156, ry: 110, tilt: 112, color: '#c9fff0', width: 0.7, dash: '22 78', offset: 12 },
+	{ rx: 134, ry: 104, tilt: 200, color: '#5ff5d0', width: 1.4, dash: '30 70', offset: 40 },
+];
 ---
 
-<svg class:list={['planet', kind]} viewBox="0 0 240 240" aria-hidden="true">
-	<defs>
-		<radialGradient id={`${id}-body`} cx="36%" cy="30%" r="95%">
-			<stop offset="0" stop-color={look.light}></stop>
-			<stop offset="0.45" stop-color={look.mid}></stop>
-			<stop offset="1" stop-color={look.dark}></stop>
-		</radialGradient>
-		<radialGradient id={`${id}-shade`} cx="32%" cy="27%" r="78%">
-			<stop offset="0.4" stop-color="#000" stop-opacity="0"></stop>
-			<stop offset="0.85" stop-color="#000" stop-opacity="0.5"></stop>
-			<stop offset="1" stop-color="#000" stop-opacity="0.82"></stop>
-		</radialGradient>
-		<radialGradient id={`${id}-halo`}>
-			<stop offset="0.64" stop-color={look.glow} stop-opacity="0"></stop>
-			<stop offset="0.675" stop-color={look.glow} stop-opacity={kind === 'eclipse' ? 0.95 : 0.36}></stop>
-			<stop offset="1" stop-color={look.glow} stop-opacity="0"></stop>
-		</radialGradient>
-		{
-			look.texture > 0 &&
-				[0, 1].map((layer) => (
-					<filter id={`${id}-surface-${layer}`} x="0" y="0" width="100%" height="100%">
-						<feTurbulence
-							type="fractalNoise"
-							baseFrequency={look.frequency}
-							numOctaves="4"
-							seed={look.seed + layer * 50}
-							result="noise"
-						/>
-						<feColorMatrix
-							in="noise"
-							type="matrix"
-							values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  1.6 1.6 1.6 0 -1.25"
-							result="mottle"
-						/>
-						<feComposite in="mottle" in2="SourceGraphic" operator="in" />
+<span class:list={['planet', kind]} style={`--toward:${round(light + 90)}deg`}>
+	{
+		kind === 'eclipse' && (
+			<span class="fx">
+				<svg class="spin" viewBox="-60 -60 360 360" aria-hidden="true">
+					<defs>
+						<filter id={key('corona-wide')} filterUnits="userSpaceOnUse" x="-60" y="-60" width="360" height="360">
+							<feGaussianBlur stdDeviation="20" />
+						</filter>
+						<filter id={key('corona-tight')} filterUnits="userSpaceOnUse" x="-60" y="-60" width="360" height="360">
+							<feGaussianBlur stdDeviation="4.5" />
+						</filter>
+						<filter id={key('corona-rays')} filterUnits="userSpaceOnUse" x="-60" y="-60" width="360" height="360">
+							<feGaussianBlur stdDeviation="1.6" />
+						</filter>
+					</defs>
+					<circle cx="120" cy="120" r="106" fill="#8a84ff" opacity="0.55" filter={url('corona-wide')} />
+					<circle cx="120" cy="120" r="101" fill="#d6dcff" filter={url('corona-tight')} />
+					<g stroke="#e8ebff" stroke-linecap="round" filter={url('corona-rays')}>
+						{streamers.map(({ angle, length, width, opacity }) => (
+							<line
+								x1="218"
+								y1="120"
+								x2={218 + length}
+								y2="120"
+								stroke-width={width}
+								opacity={opacity}
+								transform={`rotate(${angle} 120 120)`}
+							/>
+						))}
+					</g>
+					<circle cx="120" cy="120" r="114" fill="none" stroke="#c8ceff" stroke-width="0.6" opacity="0.35" />
+				</svg>
+			</span>
+		)
+	}
+
+	<svg class="globe" viewBox="0 0 240 240" aria-hidden="true">
+		<defs>
+			<clipPath id={key('disc')}><circle cx="120" cy="120" r="100"></circle></clipPath>
+
+			{
+				[
+					['blur-s', 1.2],
+					['blur-m', 4],
+					['blur-l', 12],
+					['blur-xl', 28],
+				].map(([name, deviation]) => (
+					<filter id={key(String(name))} filterUnits="userSpaceOnUse" x="-120" y="-120" width="480" height="480">
+						<feGaussianBlur stdDeviation={deviation} />
 					</filter>
 				))
+			}
+
+			{/* Ground: noise through the colour ramp, embossed toward the light. */}
+			<filter
+				id={key('ground')}
+				filterUnits="userSpaceOnUse"
+				x="0"
+				y="0"
+				width="240"
+				height="240"
+				color-interpolation-filters="sRGB"
+			>
+				<feTurbulence type="fractalNoise" baseFrequency={look.frequency} numOctaves={look.octaves} seed={look.seed} result="noise" />
+				{
+					look.swirl > 0 && (
+						<>
+							<feTurbulence type="fractalNoise" baseFrequency="0.016" numOctaves="2" seed={look.seed + 5} result="eddies" />
+							<feDisplacementMap
+								in="noise"
+								in2="eddies"
+								scale={look.swirl}
+								xChannelSelector="R"
+								yChannelSelector="G"
+								result="noise"
+							/>
+						</>
+					)
+				}
+				<feColorMatrix
+					in="noise"
+					type="matrix"
+					values={`${contrast} 0 0 0 ${lift}  ${contrast} 0 0 0 ${lift}  ${contrast} 0 0 0 ${lift}  0 0 0 0 1`}
+					result="height"
+				/>
+				<feComponentTransfer in="height" result="land">
+					<feFuncR type="table" tableValues={table(0)} />
+					<feFuncG type="table" tableValues={table(1)} />
+					<feFuncB type="table" tableValues={table(2)} />
+				</feComponentTransfer>
+				{
+					look.relief > 0 && (
+						<>
+							<feColorMatrix in="height" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  1 0 0 0 0" result="h" />
+							<feOffset in="h" dx={round(-lx * look.relief)} dy={round(-ly * look.relief)} result="beside" />
+							<feComposite in="h" in2="beside" operator="arithmetic" k2="8" k3="-8" result="facing" />
+							<feComposite in="beside" in2="h" operator="arithmetic" k2="8" k3="-8" result="averted" />
+							<feFlood flood-color="#fff" flood-opacity="0.45" />
+							<feComposite in2="facing" operator="in" result="lit" />
+							<feFlood flood-color="#000" flood-opacity="0.6" />
+							<feComposite in2="averted" operator="in" result="shadowed" />
+							<feMerge>
+								<feMergeNode in="land" />
+								<feMergeNode in="lit" />
+								<feMergeNode in="shadowed" />
+							</feMerge>
+						</>
+					)
+				}
+			</filter>
+
+			{/* Light, drawn as if from the right and turned with the lighting group. */}
+			<radialGradient id={key('shade')} gradientUnits="userSpaceOnUse" cx="195" cy="120" r="185">
+				<stop offset="0.42" stop-color={look.night} stop-opacity="0"></stop>
+				<stop offset="0.56" stop-color={look.night} stop-opacity={round(look.dark * 0.42)}></stop>
+				<stop offset="0.69" stop-color={look.night} stop-opacity={round(look.dark * 0.84)}></stop>
+				<stop offset="0.82" stop-color={look.night} stop-opacity={round(look.dark * 0.97)}></stop>
+				<stop offset="1" stop-color={look.night} stop-opacity={look.dark}></stop>
+			</radialGradient>
+			<radialGradient id={key('sheen')} gradientUnits="userSpaceOnUse" cx="172" cy="118" r="82">
+				<stop offset="0" stop-color={look.sheen} stop-opacity={look.shine}></stop>
+				<stop offset="0.5" stop-color={look.sheen} stop-opacity={round(look.shine * 0.3)}></stop>
+				<stop offset="1" stop-color={look.sheen} stop-opacity="0"></stop>
+			</radialGradient>
+			<radialGradient id={key('limb')} gradientUnits="userSpaceOnUse" cx="120" cy="120" r="100">
+				<stop offset="0.68" stop-color="#000" stop-opacity="0"></stop>
+				<stop offset="1" stop-color="#000" stop-opacity="0.42"></stop>
+			</radialGradient>
+			<radialGradient id={key('air')} gradientUnits="userSpaceOnUse" cx="120" cy="120" r="100">
+				<stop offset="0.78" stop-color={look.air} stop-opacity="0"></stop>
+				<stop offset="0.95" stop-color={look.air} stop-opacity={round(look.rim * 0.38)}></stop>
+				<stop offset="1" stop-color={look.air} stop-opacity={round(look.rim * 0.7)}></stop>
+			</radialGradient>
+			<linearGradient id={key('dayside')} gradientUnits="userSpaceOnUse" x1="70" y1="120" x2="215" y2="120">
+				<stop offset="0" stop-color="#000"></stop>
+				<stop offset="1" stop-color="#fff"></stop>
+			</linearGradient>
+			<mask id={key('day')} maskUnits="userSpaceOnUse" x="-60" y="-60" width="360" height="360">
+				<rect x="-60" y="-60" width="360" height="360" fill={url('dayside')}></rect>
+			</mask>
+			<linearGradient id={key('rim')} gradientUnits="userSpaceOnUse" x1="40" y1="120" x2="222" y2="120">
+				<stop offset="0" stop-color={look.air} stop-opacity="0"></stop>
+				<stop offset="0.5" stop-color={look.air} stop-opacity={round(look.rim * 0.2)}></stop>
+				<stop offset="1" stop-color={look.air} stop-opacity={look.rim}></stop>
+			</linearGradient>
+			<linearGradient id={key('backlight')} gradientUnits="userSpaceOnUse" x1="220" y1="120" x2="18" y2="120">
+				<stop offset="0.55" stop-color={look.air} stop-opacity="0"></stop>
+				<stop offset="1" stop-color={look.air} stop-opacity={round(look.rim * 0.45)}></stop>
+			</linearGradient>
+
+			{
+				kind === 'frost' && (
+					<>
+						<filter id={key('linea')} filterUnits="userSpaceOnUse" x="0" y="0" width="240" height="240">
+							<feTurbulence type="fractalNoise" baseFrequency="0.008 0.012" numOctaves="1" seed="9" result="wide" />
+							<feColorMatrix in="wide" values={contour('#1a4a82', 70, 1.3)[0]} result="wide-up" />
+							<feColorMatrix in="wide" values={contour('#1a4a82', 70, 1.3)[1]} result="wide-down" />
+							<feComposite in="wide-down" in2="wide-up" operator="in" result="wide-line" />
+							<feTurbulence type="fractalNoise" baseFrequency="0.016 0.01" numOctaves="2" seed="17" result="fine" />
+							<feColorMatrix in="fine" values={contour('#3d7db8', 90, 1.2)[0]} result="fine-up" />
+							<feColorMatrix in="fine" values={contour('#3d7db8', 90, 1.2)[1]} result="fine-down" />
+							<feComposite in="fine-down" in2="fine-up" operator="in" result="fine-line" />
+							<feMerge>
+								<feMergeNode in="fine-line" />
+								<feMergeNode in="wide-line" />
+							</feMerge>
+						</filter>
+						<filter id={key('glints')} filterUnits="userSpaceOnUse" x="0" y="0" width="240" height="240">
+							<feTurbulence type="fractalNoise" baseFrequency="0.55" numOctaves="1" seed="3" />
+							<feColorMatrix values={paint('#ffffff', 30, -22.2)} />
+						</filter>
+					</>
+				)
+			}
+
+			{
+				kind === 'magma' && (
+					<filter id={key('veins')} filterUnits="userSpaceOnUse" x="0" y="0" width="240" height="240">
+						<feTurbulence type="fractalNoise" baseFrequency="0.021" numOctaves="3" seed="12" result="cracks" />
+						<feColorMatrix in="cracks" values={contour('#ffd98a', 46, 1.3)[0]} result="up" />
+						<feColorMatrix in="cracks" values={contour('#ffd98a', 46, 1.3)[1]} result="down" />
+						<feComposite in="down" in2="up" operator="in" result="veins" />
+						<feTurbulence type="fractalNoise" baseFrequency="0.05" numOctaves="2" seed="30" result="fissures" />
+						<feColorMatrix in="fissures" values={contour('#ff9a40', 60, 1.1)[0]} result="f-up" />
+						<feColorMatrix in="fissures" values={contour('#ff9a40', 60, 1.1)[1]} result="f-down" />
+						<feComposite in="f-down" in2="f-up" operator="in" result="fine" />
+						<feComposite in="fine" in2="fine" operator="arithmetic" k2="0.55" result="fine" />
+						<feMerge result="core">
+							<feMergeNode in="fine" />
+							<feMergeNode in="veins" />
+						</feMerge>
+						<feGaussianBlur in="core" stdDeviation="2.6" result="spread" />
+						<feColorMatrix in="spread" values="0 0 0 0 1  0 0 0 0 0.3  0 0 0 0 0.06  0 0 0 2.8 0" result="heat" />
+						<feTurbulence type="fractalNoise" baseFrequency="0.013" numOctaves="3" seed="21" result="seas" />
+						<feColorMatrix in="seas" values={paint('#ff7426', 10, -6.6)} result="pools" />
+						<feGaussianBlur in="pools" stdDeviation="1.4" result="pools" />
+						<feMerge>
+							<feMergeNode in="heat" />
+							<feMergeNode in="pools" />
+							<feMergeNode in="core" />
+						</feMerge>
+					</filter>
+				)
+			}
+
+			{
+				kind === 'mist' && (
+					<>
+						<filter id={key('clouds')} filterUnits="userSpaceOnUse" x="0" y="0" width="240" height="240">
+							<feTurbulence type="fractalNoise" baseFrequency="0.006 0.016" numOctaves="3" seed="5" />
+							<feColorMatrix values={paint('#dce9ff', 2.6, -1)} />
+							<feGaussianBlur stdDeviation="1.6" />
+						</filter>
+						<linearGradient
+							id={key('ring')}
+							gradientUnits="userSpaceOnUse"
+							x1="0"
+							y1="120"
+							x2="240"
+							y2="120"
+							gradientTransform={`rotate(${round(light + 18)} 120 120)`}
+						>
+							<stop offset="0" stop-color="#c9dcff" stop-opacity="0.16"></stop>
+							<stop offset="0.5" stop-color="#d6e4ff" stop-opacity="0.5"></stop>
+							<stop offset="1" stop-color="#eef4ff" stop-opacity="1"></stop>
+						</linearGradient>
+					</>
+				)
+			}
+
+			{
+				kind === 'aura' && (
+					<filter id={key('curtain')} filterUnits="userSpaceOnUse" x="-60" y="-60" width="360" height="360">
+						<feTurbulence type="fractalNoise" baseFrequency="0.06 0.005" numOctaves="2" seed="3" result="streaks" />
+						<feColorMatrix in="streaks" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  1.4 0 0 0 -0.1" result="folds" />
+						<feComposite in="SourceGraphic" in2="folds" operator="in" result="sheet" />
+						<feGaussianBlur in="sheet" stdDeviation="1.4" result="near" />
+						<feGaussianBlur in="sheet" stdDeviation="6" result="far" />
+						<feMerge>
+							<feMergeNode in="far" />
+							<feMergeNode in="near" />
+						</feMerge>
+					</filter>
+				)
+			}
+
+			{
+				kind === 'desert' && (
+					<>
+						<filter id={key('canyons')} filterUnits="userSpaceOnUse" x="0" y="0" width="240" height="240">
+							<feTurbulence type="fractalNoise" baseFrequency="0.009" numOctaves="3" seed="2" result="n" />
+							<feColorMatrix in="n" values={contour('#240802', 34, 1.3)[0]} result="up" />
+							<feColorMatrix in="n" values={contour('#240802', 34, 1.3)[1]} result="down" />
+							<feComposite in="down" in2="up" operator="in" />
+						</filter>
+						<linearGradient
+							id={key('wire')}
+							gradientUnits="userSpaceOnUse"
+							x1="20"
+							y1="120"
+							x2="220"
+							y2="120"
+							gradientTransform={turn}
+						>
+							<stop offset="0" stop-color="#ff7a40" stop-opacity="0.32"></stop>
+							<stop offset="0.55" stop-color="#ff9156" stop-opacity="0.6"></stop>
+							<stop offset="1" stop-color="#ffbf8a" stop-opacity="0.95"></stop>
+						</linearGradient>
+					</>
+				)
+			}
+
+			{
+				kind === 'moon' && (
+					<>
+						<filter id={key('maria')} filterUnits="userSpaceOnUse" x="0" y="0" width="240" height="240">
+							<feTurbulence type="fractalNoise" baseFrequency="0.0075" numOctaves="3" seed="40" />
+							<feColorMatrix values={paint('#141519', 7, -3.6)} />
+							<feGaussianBlur stdDeviation="1.5" />
+						</filter>
+						{craters.map(({ gx, gy }, i) => (
+							<>
+								<linearGradient id={key(`floor-${i}`)} gradientUnits="userSpaceOnUse" x1={-gx} y1={-gy} x2={gx} y2={gy}>
+									<stop offset="0" stop-color="#e4e6ea" stop-opacity="0.34" />
+									<stop offset="0.45" stop-color="#e4e6ea" stop-opacity="0" />
+									<stop offset="0.6" stop-color="#000" stop-opacity="0.1" />
+									<stop offset="1" stop-color="#000" stop-opacity="0.62" />
+								</linearGradient>
+								<linearGradient id={key(`wall-${i}`)} gradientUnits="userSpaceOnUse" x1={-gx} y1={-gy} x2={gx} y2={gy}>
+									<stop offset="0" stop-color="#000" stop-opacity="0.4" />
+									<stop offset="1" stop-color="#f2f3f6" stop-opacity="0.6" />
+								</linearGradient>
+							</>
+						))}
+					</>
+				)
+			}
+
+			{
+				kind === 'eclipse' && (
+					<>
+						<linearGradient id={key('flare-x')} gradientUnits="userSpaceOnUse" x1={bead.x - 48} y1="0" x2={bead.x + 48} y2="0">
+							<stop offset="0" stop-color="#fff" stop-opacity="0"></stop>
+							<stop offset="0.5" stop-color="#fff" stop-opacity="0.95"></stop>
+							<stop offset="1" stop-color="#fff" stop-opacity="0"></stop>
+						</linearGradient>
+						<linearGradient id={key('flare-y')} gradientUnits="userSpaceOnUse" x1="0" y1={bead.y - 26} x2="0" y2={bead.y + 26}>
+							<stop offset="0" stop-color="#fff" stop-opacity="0"></stop>
+							<stop offset="0.5" stop-color="#fff" stop-opacity="0.85"></stop>
+							<stop offset="1" stop-color="#fff" stop-opacity="0"></stop>
+						</linearGradient>
+					</>
+				)
+			}
+		</defs>
+
+		{/* Glow into space, thrown toward the light. */}
+		{
+			look.glow > 0 && (
+				<g transform={turn} fill={look.air}>
+					<circle cx="120" cy="120" r="100" opacity={round(look.glow * 0.32)} filter={url('blur-xl')} />
+					<circle cx="125" cy="120" r="101" opacity={round(look.glow * 0.55)} filter={url('blur-l')} />
+				</g>
+			)
 		}
-		<clipPath id={`${id}-clip`}><circle cx="120" cy="120" r="100"></circle></clipPath>
-	</defs>
 
-	<circle cx="120" cy="120" r="150" fill={ref('halo')}></circle>
-	{
-		kind === 'gas' && (
-			<g class="ring back" transform="rotate(-18 120 120)">
-				<ellipse cx="120" cy="120" rx="150" ry="30" />
-				<ellipse cx="120" cy="120" rx="138" ry="26" />
-			</g>
-		)
-	}
-	<circle cx="120" cy="120" r="100" fill={ref('body')}></circle>
-	{
-		look.texture > 0 && (
-			<>
-				<circle cx="120" cy="120" r="100" fill="#000" opacity={look.texture * 0.5} filter={ref('surface-0')} />
-				<circle cx="120" cy="120" r="100" fill={look.light} opacity={look.texture * 0.3} filter={ref('surface-1')} />
-			</>
-		)
-	}
-	{
-		kind === 'rust' && (
-			<g class="wire" clip-path={ref('clip')}>
-				{[17, 40, 64, 86].map((rx) => (
-					<ellipse cx="120" cy="120" rx={rx} ry="100" />
-				))}
-				{[-72, -43, -14, 14, 43, 72].map((dy) => (
-					<ellipse cx="120" cy={120 + dy} rx={Math.sqrt(100 * 100 - dy * dy)} ry={12 - Math.abs(dy) / 10} />
-				))}
-				<line x1="120" y1="20" x2="120" y2="220" />
-			</g>
-		)
-	}
-	<circle cx="120" cy="120" r="100" fill={ref('shade')}></circle>
-	<circle class="rim" cx="120" cy="120" r="100"></circle>
-	{
-		kind === 'gas' && (
-			<g class="ring front" transform="rotate(-18 120 120)">
-				<ellipse cx="120" cy="120" rx="150" ry="30" pathLength="100" />
-				<ellipse cx="120" cy="120" rx="138" ry="26" pathLength="100" />
-			</g>
-		)
-	}
-</svg>
+		{
+			kind === 'mist' && (
+				<g transform="rotate(-18 120 120)" fill="none" stroke={url('ring')}>
+					{bands.map(({ rx, width, opacity }) => (
+						<ellipse cx="120" cy="120" rx={rx} ry={rx * 0.2} stroke-width={width} opacity={round(opacity * 0.55)} />
+					))}
+				</g>
+			)
+		}
 
-<style>
+		{/* Ground and weather, under the light. */}
+		<g clip-path={url('disc')}>
+			<circle cx="120" cy="120" r="100" fill={look.ramp[2]}></circle>
+			<rect x="20" y="20" width="200" height="200" filter={url('ground')}></rect>
+
+			{
+				kind === 'frost' && (
+					<>
+						<rect x="20" y="20" width="200" height="200" filter={url('linea')} opacity="0.75" />
+						<g fill="#f3faff" filter={url('blur-l')}>
+							<ellipse cx="120" cy="16" rx="80" ry="30" opacity="0.6" />
+							<ellipse cx="120" cy="226" rx="62" ry="22" opacity="0.4" />
+						</g>
+						<rect x="20" y="20" width="200" height="200" filter={url('glints')} />
+					</>
+				)
+			}
+
+			{
+				kind === 'mist' && (
+					<>
+						<rect x="20" y="20" width="200" height="200" filter={url('clouds')} opacity="0.55" />
+						<ellipse
+							cx="120"
+							cy="120"
+							rx="138"
+							ry="27.6"
+							fill="none"
+							stroke="#000"
+							stroke-width="10"
+							pathLength="100"
+							stroke-dasharray="50 50"
+							opacity="0.38"
+							filter={url('blur-s')}
+							transform={`translate(${round(-lx * 11)} ${round(-ly * 11)}) rotate(-18 120 120)`}
+						/>
+					</>
+				)
+			}
+
+			{
+				kind === 'storm' && (
+					<g filter={url('blur-s')}>
+						<ellipse cx="148" cy="140" rx="17" ry="9" fill="#e6dbff" opacity="0.55" />
+						<ellipse cx="148" cy="140" rx="24" ry="13" fill="none" stroke="#b9a3ff" stroke-width="2.4" opacity="0.5" />
+						<ellipse cx="148" cy="140" rx="6" ry="3.4" fill="#2a1760" opacity="0.8" />
+					</g>
+				)
+			}
+
+			{
+				kind === 'desert' && (
+					<>
+						<rect x="20" y="20" width="200" height="200" filter={url('canyons')} opacity="0.55" />
+						<ellipse cx="120" cy="22" rx="58" ry="18" fill="#ffe6cc" opacity="0.3" filter={url('blur-m')} />
+					</>
+				)
+			}
+
+			{
+				kind === 'moon' && (
+					<>
+						<rect x="20" y="20" width="200" height="200" filter={url('maria')} opacity="0.6" />
+						{craters.map(({ x, y, rx, ry, tilt, width }, i) => (
+							<ellipse
+								transform={`translate(${x} ${y}) rotate(${tilt})`}
+								rx={rx}
+								ry={ry}
+								fill={url(`floor-${i}`)}
+								stroke={url(`wall-${i}`)}
+								stroke-width={width}
+							/>
+						))}
+					</>
+				)
+			}
+
+			<g transform={turn}>
+				<circle cx="120" cy="120" r="100" fill={url('sheen')}></circle>
+				<circle cx="120" cy="120" r="100" fill={url('shade')}></circle>
+			</g>
+			<circle cx="120" cy="120" r="100" fill={url('limb')}></circle>
+		</g>
+
+		{/* Light of the planet's own, shining through the night side. */}
+		{
+			kind === 'magma' && (
+				<rect x="20" y="20" width="200" height="200" filter={url('veins')} clip-path={url('disc')} />
+			)
+		}
+
+		{
+			kind === 'aura' && (
+				<g filter={url('curtain')} fill="none">
+					<ellipse cx="120" cy="36" rx="50" ry="11" fill="#7dffc9" opacity="0.3" />
+					<ellipse cx="120" cy="40" rx="52" ry="12" stroke="#7dffc9" stroke-width="7" opacity="0.85" />
+					<ellipse cx="120" cy="33" rx="54" ry="12" stroke="#ff86dc" stroke-width="2.5" opacity="0.45" />
+					<ellipse cx="120" cy="204" rx="38" ry="8" stroke="#7dffc9" stroke-width="5" opacity="0.5" />
+				</g>
+			)
+		}
+
+		{
+			kind === 'desert' && (
+				<g clip-path={url('disc')} fill="none" stroke={url('wire')} stroke-width="0.9">
+					{[17, 40, 64, 86].map((rx) => (
+						<ellipse cx="120" cy="120" rx={rx} ry="100" />
+					))}
+					{[-72, -43, -14, 14, 43, 72].map((dy) => (
+						<ellipse cx="120" cy={120 + dy} rx={Math.sqrt(100 * 100 - dy * dy)} ry={12 - Math.abs(dy) / 10} />
+					))}
+					<line x1="120" y1="20" x2="120" y2="220" />
+				</g>
+			)
+		}
+
+		{/* Atmosphere: light scattered along the lit limb, and a thread of it round the dark one. */}
+		<g transform={turn} fill="none">
+			{
+				look.rim > 0 && (
+					<>
+						<circle cx="120" cy="120" r="100" fill={url('air')} mask={url('day')} />
+						<circle cx="120" cy="120" r="101" stroke={url('rim')} stroke-width="6" opacity="0.6" filter={url('blur-m')} />
+						<circle cx="120" cy="120" r="99.4" stroke={url('rim')} stroke-width="1.4" />
+						<circle cx="120" cy="120" r="99.6" stroke={url('backlight')} stroke-width="0.8" />
+					</>
+				)
+			}
+		</g>
+
+		{
+			kind === 'eclipse' && (
+				<>
+					<circle cx="120" cy="120" r="100" fill="none" stroke="#ecf0ff" stroke-opacity="0.95" stroke-width="1.6" />
+					<g fill="#fff">
+						<circle cx={bead.x} cy={bead.y} r="11" opacity="0.8" filter={url('blur-m')} />
+						<circle cx={bead.x} cy={bead.y} r="2.8" />
+					</g>
+					<g filter={url('blur-s')} opacity="0.9">
+						<rect x={bead.x - 48} y={bead.y - 0.6} width="96" height="1.2" fill={url('flare-x')} />
+						<rect x={bead.x - 0.5} y={bead.y - 26} width="1" height="52" fill={url('flare-y')} />
+					</g>
+				</>
+			)
+		}
+
+		{
+			kind === 'mist' && (
+				<g transform="rotate(-18 120 120)" fill="none" stroke={url('ring')}>
+					{bands.map(({ rx, width, opacity }) => (
+						<ellipse
+							cx="120"
+							cy="120"
+							rx={rx}
+							ry={rx * 0.2}
+							stroke-width={width}
+							opacity={opacity}
+							pathLength="100"
+							stroke-dasharray="50 50"
+						/>
+					))}
+				</g>
+			)
+		}
+	</svg>
+
+	{
+		kind === 'magma' && (
+			<span class="fx screen">
+				<svg class="flare" viewBox="-60 -60 360 360" aria-hidden="true">
+					<defs>
+						<filter id={key('flames')} filterUnits="userSpaceOnUse" x="-60" y="-60" width="360" height="360">
+							<feTurbulence type="fractalNoise" baseFrequency="0.045" numOctaves="3" seed="4" result="n" />
+							<feDisplacementMap in="SourceGraphic" in2="n" scale="18" xChannelSelector="R" yChannelSelector="B" result="licks" />
+							<feGaussianBlur in="licks" stdDeviation="1.1" result="near" />
+							<feGaussianBlur in="licks" stdDeviation="7" result="far" />
+							<feMerge>
+								<feMergeNode in="far" />
+								<feMergeNode in="near" />
+							</feMerge>
+						</filter>
+					</defs>
+					<g fill="none" filter={url('flames')}>
+						<circle cx="120" cy="120" r="101" stroke="#ff6a26" stroke-width="7" opacity="0.8" />
+						<circle cx="120" cy="120" r="103" stroke="#ffc46b" stroke-width="1.8" opacity="0.7" />
+					</g>
+				</svg>
+			</span>
+		)
+	}
+
+	{
+		haze && (
+			<span class="fx screen toward">
+				<svg class="spin" viewBox="-60 -60 360 360" aria-hidden="true">
+					<defs>
+						<filter id={key('haze')} filterUnits="userSpaceOnUse" x="-60" y="-60" width="360" height="360">
+							<feTurbulence type="fractalNoise" baseFrequency={haze.frequency} numOctaves="3" seed={haze.seed} />
+							<feColorMatrix values={paint(haze.color, 2, -0.75)} />
+							<feComposite in2="SourceGraphic" operator="in" />
+							<feGaussianBlur stdDeviation={haze.blur} />
+						</filter>
+						<radialGradient id={key('haze-fade')} gradientUnits="userSpaceOnUse" cx="120" cy="120" r="148">
+							{haze.stops.map(([offset, opacity]) => (
+								<stop offset={offset} stop-color="#fff" stop-opacity={opacity} />
+							))}
+						</radialGradient>
+					</defs>
+					<circle cx="120" cy="120" r="148" fill={url('haze-fade')} filter={url('haze')} />
+				</svg>
+			</span>
+		)
+	}
+
+	{
+		kind === 'aura' && (
+			<span class="fx screen">
+				<svg class="spin" viewBox="-60 -60 360 360" aria-hidden="true">
+					<defs>
+						<filter id={key('wisps')} filterUnits="userSpaceOnUse" x="-60" y="-60" width="360" height="360">
+							<feTurbulence type="fractalNoise" baseFrequency="0.012" numOctaves="2" seed="8" result="n" />
+							<feDisplacementMap in="SourceGraphic" in2="n" scale="18" xChannelSelector="R" yChannelSelector="G" result="wisps" />
+							<feGaussianBlur in="wisps" stdDeviation="5" result="glow" />
+							<feMerge>
+								<feMergeNode in="glow" />
+								<feMergeNode in="glow" />
+								<feMergeNode in="wisps" />
+							</feMerge>
+						</filter>
+					</defs>
+					<g fill="none" stroke-linecap="round" filter={url('wisps')}>
+						<circle cx="120" cy="120" r="110" stroke="#5ff5d0" stroke-width="22" opacity="0.16" />
+						<circle cx="120" cy="120" r="102" stroke="#8affdf" stroke-width="4" opacity="0.35" />
+						{ribbons.map(({ rx, ry, tilt, color, width, dash, offset }) =>
+							[width * 7, width].map((stroke) => (
+								<ellipse
+									cx="120"
+									cy="120"
+									rx={rx}
+									ry={ry}
+									stroke={color}
+									stroke-width={stroke}
+									opacity={stroke === width ? 0.9 : 0.16}
+									pathLength="100"
+									stroke-dasharray={dash}
+									stroke-dashoffset={offset}
+									transform={`rotate(${tilt} 120 120)`}
+								/>
+							)),
+						)}
+					</g>
+				</svg>
+			</span>
+		)
+	}
+
+	{
+		kind === 'storm' && (
+			<span class="fx screen">
+				<svg class="flicker" viewBox="-60 -60 360 360" aria-hidden="true">
+					<defs>
+						<filter id={key('flash')} filterUnits="userSpaceOnUse" x="-60" y="-60" width="360" height="360">
+							<feGaussianBlur stdDeviation="3.5" />
+						</filter>
+					</defs>
+					<g transform={turn}>
+						{flashes.map(({ x, y, r }) => (
+							<g opacity={r}>
+								<circle cx={x} cy={y} r="9" fill="#a98bff" filter={url('flash')} />
+								<circle cx={x} cy={y} r="1.6" fill="#f3eeff" />
+							</g>
+						))}
+					</g>
+				</svg>
+			</span>
+		)
+	}
+</span>
+
+<style is:global>
+	/*
+	 * Global, so Astro doesn't stamp a scoping attribute on every node of every
+	 * planet; everything is namespaced under .planet instead.
+	 */
 	.planet {
+		position: relative;
+		display: block;
+		width: 100%;
+		height: 100%;
+		/* Screen-blended effects mix with their own planet, not with the sky. */
+		isolation: isolate;
+	}
+
+	.planet .globe {
+		position: absolute;
+		inset: 0;
 		display: block;
 		width: 100%;
 		height: 100%;
 		overflow: visible;
 	}
 
-	.rim {
-		fill: none;
-		stroke: rgba(255, 255, 255, 0.28);
-		stroke-width: 0.75;
+	/* Moving layers, half as large again as the planet so their glow has room. */
+	.planet .fx {
+		position: absolute;
+		inset: -25%;
+		pointer-events: none;
 	}
 
-	.eclipse .rim {
-		stroke: rgba(215, 225, 255, 0.95);
-		stroke-width: 1.5;
+	.planet .fx svg {
+		display: block;
+		width: 100%;
+		height: 100%;
+		overflow: visible;
 	}
 
-	.ring {
-		fill: none;
-		stroke: rgba(190, 212, 255, 0.6);
-		stroke-width: 1.1;
+	.planet .fx.screen {
+		mix-blend-mode: screen;
 	}
 
-	/* Only the near half of the ring is drawn over the planet. */
-	.ring.front {
-		stroke-dasharray: 50 50;
+	/* Haze thickest where the light catches it. */
+	.planet .fx.toward {
+		mask-image: linear-gradient(var(--toward), rgba(0, 0, 0, 0.35) 25%, #000 75%);
 	}
 
-	.ring.back {
-		opacity: 0.45;
+	@media (prefers-reduced-motion: no-preference) {
+		.planet .spin {
+			animation: planet-spin 90s linear infinite paused;
+		}
+
+		.planet.aura .spin {
+			animation-duration: 36s;
+		}
+
+		a:is(:hover, :focus-visible) .planet .spin {
+			animation-play-state: running;
+		}
+
+		a:is(:hover, :focus-visible) .planet .flare {
+			animation: planet-burn 1.6s ease-in-out infinite alternate;
+		}
+
+		a:is(:hover, :focus-visible) .planet .flicker {
+			animation: planet-lightning 2.8s steps(1, end) infinite;
+		}
 	}
 
-	.wire {
-		fill: none;
-		stroke: rgba(255, 150, 90, 0.75);
-		stroke-width: 0.9;
+	@keyframes planet-spin {
+		to {
+			rotate: 360deg;
+		}
+	}
+
+	@keyframes planet-burn {
+		50% {
+			opacity: 0.8;
+			scale: 1.02;
+		}
+		to {
+			opacity: 1;
+			scale: 1.045;
+		}
+	}
+
+	@keyframes planet-lightning {
+		0%,
+		30%,
+		38%,
+		70%,
+		74% {
+			opacity: 1;
+		}
+		8%,
+		34%,
+		52%,
+		72%,
+		90% {
+			opacity: 0.25;
+		}
 	}
 </style>
