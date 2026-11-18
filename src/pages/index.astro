@@ -81,7 +81,7 @@ const hubs: Destination[] = [
 		label: 'Experience',
 		sub: `${count(workCount, 'role')} · ${volunteerCount} volunteer`,
 		href: '/experience',
-		kind: 'gas',
+		kind: 'mist',
 		x: 28.5,
 		y: 45,
 		size: 262,
@@ -97,7 +97,7 @@ const hubs: Destination[] = [
 		label: 'Projects',
 		sub: count(allProjects.length, 'build'),
 		href: '/projects',
-		kind: 'rust',
+		kind: 'desert',
 		x: 83.5,
 		y: 64,
 		size: 268,
@@ -135,10 +135,10 @@ const slots: {
 	size: number;
 	over?: boolean;
 }[] = [
-	{ entry: 'ifast-global-hub-ai', label: 'iFAST', kind: 'ice', x: 13, y: 26, size: 200, over: true },
-	{ entry: 'moneylion', label: 'MoneyLion', kind: 'ember', x: 36.5, y: 19.5, size: 108 },
-	{ entry: 'it-society-president', label: 'IT Society', kind: 'violet', x: 69.5, y: 19, size: 112 },
-	{ entry: 'hackerspace-mmu-president', label: 'Hackerspace', kind: 'aurora', x: 87.5, y: 26, size: 176, over: true },
+	{ entry: 'ifast-global-hub-ai', label: 'iFAST', kind: 'frost', x: 13, y: 26, size: 200, over: true },
+	{ entry: 'moneylion', label: 'MoneyLion', kind: 'magma', x: 36.5, y: 19.5, size: 108 },
+	{ entry: 'it-society-president', label: 'IT Society', kind: 'storm', x: 69.5, y: 19, size: 112 },
+	{ entry: 'hackerspace-mmu-president', label: 'Hackerspace', kind: 'aura', x: 87.5, y: 26, size: 176, over: true },
 	{ entry: 'barcamp-cyberjaya-2024', label: 'BarCamp', kind: 'moon', x: 18.5, y: 80, size: 330, over: true },
 ];
 
@@ -160,6 +160,11 @@ const outposts: Destination[] = slots.flatMap(({ entry: id, ...slot }) => {
 });
 
 const destinations = [...hubs, ...outposts];
+
+/** The sun: the warm glow at the top of the sky. Every planet is lit from it. */
+const sun = { x: 50, y: 2 };
+const lightFrom = (x: number, y: number) =>
+	Math.round((Math.atan2((sun.y - y) * 1080, (sun.x - x) * 1920) * 180) / Math.PI);
 
 /** One hexagon per project, each with a tool icon no other hexagon is using. */
 const usedIcons = new Set<string>();
@@ -211,7 +216,7 @@ const jsonLd = graph({
 										loading="eager"
 									/>
 								) : (
-									<Planet kind={kind} id={`planet-${id}`} />
+									<Planet kind={kind} id={`planet-${id}`} light={lightFrom(x, y)} />
 								)}
 							</span>
 							<span class="label">
@@ -517,6 +522,16 @@ const jsonLd = graph({
 	.over .label {
 		top: 50%;
 		translate: -50% -35%;
+		isolation: isolate;
+	}
+
+	/* A pool of shadow under labels printed across a lit planet. */
+	.over .label::before {
+		content: '';
+		position: absolute;
+		inset: -0.9em -1.6em;
+		z-index: -1;
+		background: radial-gradient(closest-side, rgba(3, 5, 12, 0.62), rgba(3, 5, 12, 0.3) 60%, transparent);
 	}
 
 	.name {
@@ -854,6 +869,10 @@ const jsonLd = graph({
 		.over .label {
 			top: 96%;
 			translate: -50% 0;
+		}
+
+		.over .label::before {
+			display: none;
 		}
 
 		.name {
