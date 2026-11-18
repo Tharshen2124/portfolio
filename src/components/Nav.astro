@@ -1,6 +1,7 @@
 ---
 import { site } from '../data/site';
 import { pagePath } from '../lib/seo';
+import Soundtrack from './Soundtrack.astro';
 
 const links = [
 	{ href: '/', label: 'Home' },
@@ -25,15 +26,18 @@ const isActive = (href: string) => (href === '/' ? path === '/' : path.startsWit
 			<span class="tagline">{site.tagline}</span>
 		</span>
 	</a>
-	<nav aria-label="Main">
-		{
-			links.map(({ href, label }) => (
-				<a href={href} aria-current={isActive(href) ? 'page' : undefined}>
-					{label}
-				</a>
-			))
-		}
-	</nav>
+	<div class="controls">
+		<nav aria-label="Main">
+			{
+				links.map(({ href, label }) => (
+					<a href={href} aria-current={isActive(href) ? 'page' : undefined}>
+						{label}
+					</a>
+				))
+			}
+		</nav>
+		<Soundtrack />
+	</div>
 </header>
 
 <style>
@@ -93,6 +97,12 @@ const isActive = (href: string) => (href === '/' ? path === '/' : path.startsWit
 		white-space: nowrap;
 		overflow: hidden;
 		text-overflow: ellipsis;
+	}
+
+	.controls {
+		display: flex;
+		align-items: center;
+		gap: clamp(1.25rem, 3vw, 3rem);
 	}
 
 	nav {

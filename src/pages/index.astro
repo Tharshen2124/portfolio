@@ -335,11 +335,13 @@ const jsonLd = graph({
 
 <script>
 	// Drift the planets against the pointer; nearer (larger) ones move further.
-	const map = document.querySelector<HTMLElement>('.map');
+	// Bound on every page load: the ClientRouter swaps in a fresh map each visit.
 	const still = window.matchMedia('(prefers-reduced-motion: reduce)');
 	const fine = window.matchMedia('(hover: hover) and (pointer: fine)');
 
-	if (map && !still.matches && fine.matches) {
+	document.addEventListener('astro:page-load', () => {
+		const map = document.querySelector<HTMLElement>('.map');
+		if (!map || still.matches || !fine.matches) return;
 		let frame = 0;
 		map.addEventListener('pointermove', (event) => {
 			cancelAnimationFrame(frame);
@@ -349,7 +351,7 @@ const jsonLd = graph({
 				map.style.setProperty('--my', ((event.clientY - box.top) / box.height - 0.5).toFixed(3));
 			});
 		});
-	}
+	});
 </script>
 
 <style>

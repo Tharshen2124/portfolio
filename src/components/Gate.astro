@@ -1,48 +1,96 @@
 ---
 /**
- * First-visit choice between the two ways to read the site:
+ * First-visit title screen: choose between the two ways to read the site.
  *   plain – the original minimal site, for someone who wants the facts and out
- *   map   – the star map
+ *   map   – the star map (with its soundtrack)
  *
  * The choice lives in localStorage and is applied to <html data-mode> by the
  * inline script in Layout's <head>, before first paint. Until a choice exists
- * the mode is "ask", which is the only state that shows this dialog. Without
+ * the mode is "ask", which is the only state that shows this screen. Without
  * JavaScript there is no "ask" state and the star map is shown.
  */
+import { site } from '../data/site';
+
+/* Points on the chart's orbits, in chart units around (0, 0). */
+const at = (r: number, deg: number) => {
+	const a = (deg * Math.PI) / 180;
+	return { cx: +(r * Math.cos(a)).toFixed(1), cy: +(r * Math.sin(a)).toFixed(1) };
+};
+const beads = [200, 218, 236, 254, 272, 290, 308, 326, 344].map((deg) => at(292, deg));
+const ticks = Array.from({ length: 72 }, (_, i) => i * 5);
 ---
 
-<div class="gate" role="dialog" aria-modal="true" aria-labelledby="gate-title" tabindex="-1">
-	<div class="gate-inner">
-		<p class="kicker">Before you go in</p>
-		<h2 id="gate-title" class="title">How would you like to do this?</h2>
+<div class="gate" role="dialog" aria-modal="true" aria-label="Choose how to view the site" tabindex="-1">
+	<div class="glow" aria-hidden="true"></div>
+	<div class="horizon" aria-hidden="true"></div>
 
-		<div class="choices">
-			<button type="button" class="choice" data-set-mode="plain">
-				<svg class="glyph" viewBox="0 0 48 48" aria-hidden="true">
-					<line x1="10" y1="14" x2="38" y2="14"></line>
-					<line x1="10" y1="24" x2="38" y2="24"></line>
-					<line x1="10" y1="34" x2="28" y2="34"></line>
-				</svg>
-				<span class="choice-name">Just the info</span>
-				<span class="choice-text">
-					The plain site. Experience, projects and writing on one page, then you're on your way.
-				</span>
-			</button>
+	<svg class="chart" viewBox="-500 -500 1000 1000" aria-hidden="true">
+		<g class="rings">
+			<circle r="478"></circle>
+			<circle r="404"></circle>
+			<circle r="250"></circle>
+			<circle r="172"></circle>
+			<circle class="faint" r="120"></circle>
+			<circle class="faint" r="440"></circle>
+		</g>
 
-			<button type="button" class="choice" data-set-mode="map">
-				<svg class="glyph" viewBox="0 0 48 48" aria-hidden="true">
-					<circle cx="24" cy="24" r="11"></circle>
-					<ellipse cx="24" cy="24" rx="21" ry="7" transform="rotate(-24 24 24)"></ellipse>
-					<circle class="solid" cx="24" cy="24" r="2.5"></circle>
-				</svg>
-				<span class="choice-name">Explore my destiny</span>
-				<span class="choice-text">
-					A star map of everything I've done so far. Pick a destination and wander.
-				</span>
-			</button>
-		</div>
+		<g class="spin">
+			<circle class="tick-ring" r="336"></circle>
+			<circle class="node" cx="0" cy="-336" r="7"></circle>
+		</g>
+		<g class="spin slow">
+			{
+				ticks.map((deg) => (
+					<line
+						class={deg % 30 === 0 ? 'tick major' : 'tick'}
+						x1="0"
+						y1="-404"
+						x2="0"
+						y2={deg % 30 === 0 ? -390 : -397}
+						transform={`rotate(${deg})`}
+					/>
+				))
+			}
+		</g>
 
-		<p class="note">You can switch at any time from the bottom of any page.</p>
+		<!-- Axis, broken where the title sits. -->
+		<line class="axis" x1="0" y1="-492" x2="0" y2="-210"></line>
+		<line class="axis" x1="0" y1="190" x2="0" y2="492"></line>
+		<path class="mark" d="M0 -470 l-9 16 h18 z"></path>
+		<path class="mark" d="M0 -300 l-9 -16 h18 z"></path>
+		<circle class="node hollow" cx="0" cy="250" r="9"></circle>
+		<circle class="node" cx="0" cy="404" r="5"></circle>
+
+		<!-- Bodies on their orbits. -->
+		<circle class="node hollow" {...at(404, 208)} r="13"></circle>
+		<circle class="node" {...at(250, 322)} r="5"></circle>
+		<circle class="node hollow" {...at(478, 136)} r="10"></circle>
+		<circle class="node" {...at(172, 158)} r="4"></circle>
+		<circle class="node hollow" {...at(440, 34)} r="16"></circle>
+		<circle class="node" {...at(440, 34)} r="3"></circle>
+
+		<!-- A dotted arc of waypoints under the title. -->
+		{beads.map((bead) => <circle class="bead" {...bead} r="3.5" />)}
+
+		<!-- Diamonds at the ends of the inner orbit. -->
+		<rect class="mark" x="-6" y="-6" width="12" height="12" transform="translate(-250 0) rotate(45)"></rect>
+		<rect class="mark" x="-6" y="-6" width="12" height="12" transform="translate(250 0) rotate(45)"></rect>
+	</svg>
+
+	<div class="title-block">
+		<p class="maker">{site.shortName}</p>
+		<h2 class="title">Portfolio</h2>
+	</div>
+
+	<div class="prompts">
+		<button type="button" class="prompt plain" data-set-mode="plain">
+			<span class="key" aria-hidden="true">Esc</span>
+			Just the info
+		</button>
+		<button type="button" class="prompt explore" data-set-mode="map">
+			<span class="keyboard">Press <span class="key" aria-hidden="true">Enter</span> to explore</span>
+			<span class="touch">Tap to explore</span>
+		</button>
 	</div>
 </div>
 
@@ -56,9 +104,26 @@
 
 		if (root.dataset.mode === 'ask') {
 			setInert(true);
-			// Focus the dialog, not a choice, so neither option looks pre-selected.
+			// Focus the screen, not a choice, so neither option looks pre-selected.
 			gate.focus({ preventScroll: true });
 		}
+
+		// Title-screen keys: Enter to explore, Esc for just the info. A focused
+		// button handles its own Enter, so only act when the screen itself has focus.
+		document.addEventListener('keydown', (event) => {
+			if (root.dataset.mode !== 'ask') return;
+			if (event.key === 'Escape') {
+				event.preventDefault();
+				gate.querySelector('.plain').click();
+			} else if (event.key === 'Enter' && !event.target.closest('button, a')) {
+				event.preventDefault();
+				gate.querySelector('.explore').click();
+			}
+		});
+
+		gate.addEventListener('animationend', (event) => {
+			if (event.animationName === 'gate-out') gate.classList.remove('leaving');
+		});
 
 		// Any element with data-set-mode switches mode: the two choices here,
 		// and the switch links in the footer and on the map.
@@ -72,6 +137,10 @@
 			} catch {
 				// Private browsing: the choice just won't be remembered.
 			}
+			// Let the title screen fade out over the page it reveals.
+			if (firstChoice && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+				gate.classList.add('leaving');
+			}
 			root.dataset.mode = mode;
 			setInert(false);
 			window.dispatchEvent(new Event('sitemode'));
@@ -83,18 +152,25 @@
 
 <style>
 	.gate {
+		--copper: #c4906c;
+		--ink: #f5f3f0;
+		--ash: #b7b2ac;
+
 		display: none;
 		position: fixed;
 		inset: 0;
 		z-index: 100;
-		overflow-y: auto;
-		background: radial-gradient(90% 70% at 50% 45%, rgba(8, 12, 24, 0.82), rgba(3, 5, 11, 0.96));
-		/* The gate always wears the star-map palette, whatever sits behind it. */
-		color: #c9d0dc;
+		overflow: hidden;
+		background:
+			radial-gradient(60% 55% at 50% 50%, rgba(40, 38, 40, 0.55), transparent 70%),
+			radial-gradient(120% 100% at 50% 50%, #1b1b1f 0%, #121215 60%, #0b0b0d 100%);
+		color: var(--ink);
 		outline: none;
+		user-select: none;
 	}
 
-	:global(html[data-mode='ask']) .gate {
+	:global(html[data-mode='ask']) .gate,
+	.gate.leaving {
 		display: grid;
 		place-items: center;
 	}
@@ -103,132 +179,325 @@
 		overflow: hidden;
 	}
 
-	.gate-inner {
-		width: min(100%, 50rem);
-		padding: 3rem 1.25rem;
-		text-align: center;
-		animation: rise 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+	.gate.leaving {
+		pointer-events: none;
+		animation: gate-out 0.9s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 	}
 
-	@keyframes rise {
-		from {
+	@keyframes gate-out {
+		to {
 			opacity: 0;
-			translate: 0 0.75rem;
+			visibility: hidden;
 		}
 	}
 
-	.kicker {
-		margin: 0 0 1rem;
-		font-size: 0.75rem;
-		font-weight: 600;
-		letter-spacing: 0.24em;
-		text-transform: uppercase;
-		color: #5fd6c9;
+	/* Film grain over everything, and the light leaking in from the corners. */
+	.gate::after {
+		content: '';
+		position: absolute;
+		inset: 0;
+		pointer-events: none;
+		opacity: 0.09;
+		mix-blend-mode: overlay;
+		background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 	}
 
-	.title {
-		margin: 0 0 2.75rem;
-		font-family: var(--font-display), Georgia, serif;
-		font-size: clamp(1.25rem, 4.2vw, 2rem);
-		font-weight: 500;
-		line-height: 1.4;
-		letter-spacing: 0.2em;
-		text-transform: uppercase;
-		text-wrap: balance;
-		color: #f4f6fa;
+	.glow {
+		position: absolute;
+		inset: 0;
+		pointer-events: none;
+		background:
+			radial-gradient(38% 42% at 11% 4%, rgba(236, 168, 128, 0.62), rgba(196, 120, 86, 0.22) 45%, transparent 75%),
+			radial-gradient(34% 40% at 100% 100%, rgba(58, 104, 118, 0.32), transparent 70%);
+		animation: glow-in 2.4s ease-out both;
 	}
 
-	.choices {
-		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax(min(100%, 17rem), 1fr));
-		gap: 1.25rem;
+	@keyframes glow-in {
+		from {
+			opacity: 0;
+		}
 	}
 
-	.choice {
-		display: grid;
-		justify-items: center;
-		align-content: start;
-		gap: 0.6rem;
-		padding: 2rem 1.5rem 1.75rem;
-		border: 1px solid rgba(190, 205, 235, 0.22);
-		border-top: 3px solid rgba(190, 205, 235, 0.45);
-		background: rgba(10, 14, 26, 0.78);
-		color: inherit;
-		font: inherit;
-		cursor: pointer;
-		transition:
-			border-color 0.2s,
-			background-color 0.2s,
-			translate 0.25s cubic-bezier(0.2, 0.7, 0.2, 1);
+	/* The long hairline the whole chart hangs on. */
+	.horizon {
+		position: absolute;
+		inset: 50% 0 auto;
+		height: 1px;
+		background: linear-gradient(90deg, transparent, rgba(196, 144, 108, 0.32) 18%, rgba(196, 144, 108, 0.32) 82%, transparent);
+		animation: horizon-in 1.6s 0.2s cubic-bezier(0.2, 0.7, 0.2, 1) both;
 	}
 
-	.choice:hover,
-	.choice:focus-visible {
-		border-color: #f4f6fa;
-		background: rgba(22, 30, 52, 0.9);
-		translate: 0 -0.25rem;
-		outline: none;
+	@keyframes horizon-in {
+		from {
+			transform: scaleX(0);
+		}
 	}
 
-	.glyph {
-		width: 3rem;
-		height: 3rem;
-		margin-bottom: 0.5rem;
+	/* ---- Chart ---- */
+
+	.chart {
+		position: absolute;
+		top: 50%;
+		left: 50%;
+		width: min(118vmin, 980px);
+		height: min(118vmin, 980px);
+		translate: -50% -50%;
+		overflow: visible;
 		fill: none;
-		stroke: #f4f6fa;
-		stroke-width: 1.5;
-		stroke-linecap: round;
+		stroke: var(--copper);
+		stroke-width: 1.4;
+		opacity: 0.42;
+		animation: chart-in 2s 0.1s cubic-bezier(0.2, 0.7, 0.2, 1) both;
 	}
 
-	.glyph .solid {
-		fill: #f4f6fa;
+	@keyframes chart-in {
+		from {
+			opacity: 0;
+			scale: 0.94;
+		}
+	}
+
+	.chart .faint {
+		opacity: 0.45;
+		stroke-dasharray: 2 7;
+	}
+
+	.chart .tick-ring {
+		stroke-width: 8;
+		stroke-dasharray: 1.2 9;
+		opacity: 0.55;
+	}
+
+	.chart .tick {
+		opacity: 0.6;
+	}
+
+	.chart .tick.major {
+		stroke-width: 2;
+		opacity: 1;
+	}
+
+	.chart .axis {
+		opacity: 0.8;
+	}
+
+	.chart .node,
+	.chart .mark,
+	.chart .bead {
+		fill: var(--copper);
 		stroke: none;
 	}
 
-	.choice-name {
-		font-size: 1.0625rem;
-		font-weight: 700;
-		letter-spacing: 0.12em;
-		text-transform: uppercase;
-		color: #f4f6fa;
+	.chart .node.hollow {
+		fill: none;
+		stroke: var(--copper);
+		stroke-width: 1.6;
 	}
 
-	.choice-text {
-		max-width: 19rem;
-		font-size: 0.9375rem;
-		line-height: 1.55;
-		color: #aab3c4;
+	.chart .bead {
+		opacity: 0.7;
+	}
+
+	.spin {
+		animation: spin 160s linear infinite;
+	}
+
+	.spin.slow {
+		animation-duration: 420s;
+		animation-direction: reverse;
+	}
+
+	@keyframes spin {
+		to {
+			rotate: 360deg;
+		}
+	}
+
+	/* ---- Title ---- */
+
+	.title-block {
+		position: relative;
+		display: grid;
+		justify-items: center;
+		gap: clamp(0.4rem, 1.2vw, 0.9rem);
+		padding: 0 1.25rem;
+		text-align: center;
+		animation: title-in 1.8s 0.5s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+	}
+
+	@keyframes title-in {
+		from {
+			opacity: 0;
+			filter: blur(6px);
+		}
+	}
+
+	.maker {
+		margin: 0 -0.62em 0 0;
+		font-family: var(--font-sans), system-ui, sans-serif;
+		font-size: clamp(0.8rem, 2.1vw, 1.65rem);
+		font-weight: 400;
+		line-height: 1;
+		letter-spacing: 0.62em;
+		text-transform: uppercase;
+		color: var(--ink);
+	}
+
+	.title {
+		margin: 0;
+		font-family: var(--font-title), Impact, sans-serif;
+		font-size: clamp(3.75rem, 12.5vw, 9.5rem);
+		font-weight: 400;
+		line-height: 0.92;
+		letter-spacing: 0.005em;
+		text-transform: uppercase;
+		color: #fff;
+		/* Two hairline cuts slanting through the letters. */
+		mask-image: linear-gradient(
+			100deg,
+			#000 31.4%,
+			transparent 31.4%,
+			transparent 32.4%,
+			#000 32.4%,
+			#000 66.8%,
+			transparent 66.8%,
+			transparent 67.6%,
+			#000 67.6%
+		);
+	}
+
+	/* ---- Prompts ---- */
+
+	.prompts {
+		position: absolute;
+		inset: auto 0 clamp(4rem, 17vh, 12rem);
+		display: grid;
+		grid-template-columns: 1fr auto 1fr;
+		align-items: center;
+		padding: 0 1.25rem;
+		animation: prompts-in 1s 1.6s ease-out both;
+	}
+
+	@keyframes prompts-in {
+		from {
+			opacity: 0;
+		}
+	}
+
+	.prompt {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.55rem;
+		padding: 0.6rem 0.9rem;
+		border: 0;
+		background: none;
+		color: var(--ash);
+		font-family: var(--font-sans), system-ui, sans-serif;
+		font-size: clamp(0.9rem, 1.1vw, 1.0625rem);
+		letter-spacing: 0.04em;
+		cursor: pointer;
+		transition: color 0.2s;
+	}
+
+	.prompt:hover,
+	.prompt:focus-visible {
+		color: #fff;
+		outline: none;
+	}
+
+	.prompt:focus-visible {
+		outline: 1px solid rgba(196, 144, 108, 0.6);
+		outline-offset: 2px;
+	}
+
+	.plain {
+		justify-self: center;
+	}
+
+	.explore {
+		grid-column: 2;
+		text-transform: uppercase;
+		animation: breathe 3.2s 2.6s ease-in-out infinite;
+	}
+
+	.explore:hover,
+	.explore:focus-visible {
+		animation: none;
+	}
+
+	@keyframes breathe {
+		50% {
+			opacity: 0.45;
+		}
+	}
+
+	.keyboard {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.55rem;
+	}
+
+	.touch {
+		display: none;
+	}
+
+	.key {
+		display: inline-grid;
+		place-items: center;
+		min-width: 1.6em;
+		height: 1.6em;
+		padding: 0 0.45em;
+		border-radius: 999px;
+		font-size: 0.72em;
+		font-weight: 600;
+		letter-spacing: 0.06em;
+		text-transform: uppercase;
+		line-height: 1;
+	}
+
+	.plain .key {
+		border: 1.5px solid #c46a62;
+		color: #e0a49c;
+	}
+
+	.explore .key {
+		background: #4d6fb0;
+		color: #fff;
+	}
+
+	/* Touch screens have no keys to press. */
+	@media (hover: none) and (pointer: coarse) {
+		.keyboard,
+		.plain .key {
+			display: none;
+		}
+
+		.touch {
+			display: inline;
+		}
 	}
 
 	@media (max-width: 719px) {
-		/* The cards fill the screen here, so hide the page behind them fully. */
-		.gate {
-			background: rgba(3, 5, 11, 0.97);
+		.prompts {
+			grid-template-columns: 1fr;
+			justify-items: center;
+			gap: 0.75rem;
+			bottom: clamp(3rem, 12vh, 6rem);
 		}
 
-		.gate-inner {
-			padding: 2.5rem 1.25rem;
+		.explore {
+			grid-column: auto;
+			grid-row: 1;
 		}
 
-		.title {
-			margin-bottom: 2rem;
+		.plain {
+			grid-row: 2;
 		}
 
-		.choice {
-			padding: 1.5rem 1.25rem;
+		.glow {
+			background:
+				radial-gradient(70% 38% at 0% 0%, rgba(236, 168, 128, 0.55), rgba(196, 120, 86, 0.18) 50%, transparent 80%),
+				radial-gradient(60% 34% at 100% 100%, rgba(58, 104, 118, 0.3), transparent 70%);
 		}
-
-		.glyph {
-			width: 2.25rem;
-			height: 2.25rem;
-			margin-bottom: 0.25rem;
-		}
-	}
-
-	.note {
-		margin: 2.25rem 0 0;
-		font-size: 0.8125rem;
-		letter-spacing: 0.04em;
-		color: #8b95a8;
 	}
 </style>

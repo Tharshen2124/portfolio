@@ -33,5 +33,16 @@ export default defineConfig({
 			subsets: ['latin'],
 			fallbacks: ['Georgia', 'serif'],
 		},
+		{
+			// Heavy condensed face for the title screen only. Not preloaded: it is
+			// fetched only when the first-visit gate is actually on screen.
+			provider: fontProviders.fontsource(),
+			name: 'Anton',
+			cssVariable: '--font-title',
+			weights: [400],
+			styles: ['normal'],
+			subsets: ['latin'],
+			fallbacks: ['Impact', 'sans-serif'],
+		},
 	],
 });

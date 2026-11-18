@@ -38,16 +38,6 @@ const links = [
 	</p>
 </footer>
 
-<script is:inline>
-	document.querySelectorAll('[data-posthog-social-profile]').forEach((link) => {
-		link.addEventListener('click', () => {
-			window.posthog?.capture('social_profile_opened', {
-				profile: link.dataset.posthogSocialProfile,
-			});
-		});
-	});
-</script>
-
 <style>
 	footer {
 		display: flex;

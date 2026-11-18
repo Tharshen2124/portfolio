@@ -1,5 +1,6 @@
 ---
 import { Font } from 'astro:assets';
+import { ClientRouter } from 'astro:transitions';
 import Nav from '../components/Nav.astro';
 import Footer from '../components/Footer.astro';
 import Space from '../components/Space.astro';
@@ -65,8 +66,17 @@ const image = await defaultImage();
 					const dark = matchMedia('(prefers-color-scheme: dark)').matches;
 					document.querySelector('meta[name="theme-color"]').content = dark ? '#000000' : '#ffffff';
 				}
+
+				// Page changes swap in a new <html> and <head> without re-running this
+				// script, so carry the mode and theme colour over to the incoming page.
+				document.addEventListener('astro:before-swap', ({ newDocument }) => {
+					newDocument.documentElement.dataset.mode = document.documentElement.dataset.mode;
+					const color = document.querySelector('meta[name="theme-color"]').content;
+					newDocument.querySelector('meta[name="theme-color"]').content = color;
+				});
 			})();
 		</script>
+		<ClientRouter />
 
 		<meta property="og:title" content={pageTitle} />
 		<meta property="og:description" content={description} />
@@ -97,6 +107,7 @@ const image = await defaultImage();
 		{jsonLd && <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />}
 		<Font cssVariable="--font-sans" preload />
 		<Font cssVariable="--font-display" preload />
+		<Font cssVariable="--font-title" />
 		<PostHog />
 	</head>
 	<body>
