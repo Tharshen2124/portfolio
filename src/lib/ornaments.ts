@@ -190,16 +190,33 @@ function finial(): Ornament {
 	return { width: 28, height: 64, d: toPath(shapes) };
 }
 
-/** One corner bracket of the selection frame around a chosen item; CSS flips it for the others. */
-function bracket(): Ornament {
+/** The strokes of one top-left corner bracket, in a 30 × 30 box. */
+function bracketShapes(): Pt[][] {
 	const across = bezier([7, 5], [12, 4.4], [17, 4.4], [22, 5.6]);
 	const down = bezier([5, 7], [4.4, 12], [4.4, 17], [5.6, 22]);
-	const shapes: Pt[][] = [
+	return [
 		...tendril(join(across, curl([22, 5.6], endHeading(across), 13, 0.9, 1, 0.3)), 2.4, 2.8, 1, 1.25, 0.3),
 		...tendril(join(down, curl([5.6, 22], endHeading(down), 13, 0.9, -1, 0.3)), 2.4, 2.8, 1, 1.25, 0.3),
 		leaf([7.5, 7.5], [0.5, 0.5], 4),
 	];
-	return { width: 30, height: 30, d: toPath(shapes) };
+}
+
+/** One corner bracket of the selection frame around a chosen item; CSS flips it for the others. */
+function bracket(): Ornament {
+	return { width: 30, height: 30, d: toPath(bracketShapes()) };
+}
+
+/**
+ * All four brackets around a medallion, mirrored in the drawing itself so
+ * every corner sits exactly as far from the medallion as the others. The
+ * medallion spans the middle 79 units; each bracket hangs 19 units outside it.
+ */
+function medalFrame(): Ornament {
+	const size = 117;
+	const mid = size / 2;
+	const corner = bracketShapes();
+	const top = [...corner, ...mirrorX(corner, mid)];
+	return { width: size, height: size, d: toPath([...top, ...mirrorY(top, mid)]) };
 }
 
 /**
@@ -283,6 +300,7 @@ export const ornaments = {
 	hook: hook(),
 	finial: finial(),
 	bracket: bracket(),
+	'medal-frame': medalFrame(),
 	'key-arrow': keyArrow(),
 } satisfies Record<string, Ornament>;
 
