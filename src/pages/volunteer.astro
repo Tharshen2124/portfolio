@@ -102,10 +102,11 @@ const description =
 <script>
 	// The rail's finial follows how far down the list you've read. Screens are
 	// swapped in by the ClientRouter, so it's set up on each page load that has
-	// a rail and let go before the next screen arrives.
+	// a rail and let go before the next screen arrives. It also sets up as soon
+	// as it runs, since the router can fire astro:page-load before this inline
+	// script has run on the first visit; setting up again just starts afresh.
 	let release = () => {};
-	document.addEventListener('astro:before-swap', () => release());
-	document.addEventListener('astro:page-load', () => {
+	const setUp = () => {
 		release();
 		const rail = document.querySelector<HTMLElement>('.rail');
 		if (!rail) return;
@@ -126,7 +127,11 @@ const description =
 		window.addEventListener('scroll', queue, { passive: true, signal: listening.signal });
 		window.addEventListener('resize', queue, { signal: listening.signal });
 		release = () => listening.abort();
-	});
+	};
+
+	setUp();
+	document.addEventListener('astro:before-swap', () => release());
+	document.addEventListener('astro:page-load', setUp);
 </script>
 
 <style>
