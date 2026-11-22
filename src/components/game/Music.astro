@@ -29,6 +29,7 @@
 	const PREF = 'game-music';
 	const POSITION = 'game-music-position';
 	const VOLUME = 0.2;
+	const START_VOLUME = 0.01;
 
 	const audio = document.querySelector<HTMLAudioElement>('audio.soundtrack')!;
 	const toggle = document.querySelector<HTMLButtonElement>('button.music')!;
@@ -83,7 +84,12 @@
 			const at = Number(read(() => sessionStorage, POSITION));
 			if (at > 0) audio.currentTime = at;
 		}
-		audio.volume = 0;
+		// Fade in from just above silence, not from 0. Firefox and Safari let
+		// silent (volume 0) playback start without a press, then pause it the
+		// moment the fade makes it audible, so play() never says it was blocked
+		// and the start screen never shows. Any volume above 0 counts as sound
+		// to them, so they refuse here as Chrome does.
+		audio.volume = START_VOLUME;
 		audio
 			.play()
 			.then(() => fadeTo(VOLUME, 2))
