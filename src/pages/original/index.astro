@@ -1,0 +1,121 @@
+---
+import { Image } from 'astro:assets';
+import Layout from '../../layouts/OriginalLayout.astro';
+import EntryList from '../../components/original/EntryList.astro';
+import { site } from '../../data/site';
+import { getExperience, experienceHref, type Experience } from '../../lib/experience';
+import { getRecentProjects } from '../../lib/projects';
+import { getSubstackFeed } from '../../lib/substack';
+import { formatDay, formatMonth } from '../../lib/format';
+import { absoluteUrl, defaultImage, graph, personSchema } from '../../lib/seo';
+import { originalPath } from '../../lib/original';
+import portrait from '../../assets/tharshen-avatar.jpg';
+
+const writeups = (await getExperience()).filter((entry) => experienceHref(entry));
+const toEntry = (entry: Experience) => ({
+	date: formatMonth(entry.data.startDate),
+	title: entry.data.title,
+	href: originalPath(experienceHref(entry)!),
+});
+const work = writeups.filter((entry) => entry.data.category === 'work').map(toEntry);
+const volunteer = writeups
+	.filter((entry) => entry.data.category === 'volunteer' && entry.data.featured)
+	.map(toEntry);
+
+const projects = (await getRecentProjects()).slice(0, 3).map(({ data }) => ({
+	date: formatMonth(data.startDate),
+	title: data.name,
+	href: data.repo,
+}));
+
+const { posts } = await getSubstackFeed();
+const writing = posts.slice(0, 3).map((post) => ({
+	date: formatDay(post.date),
+	title: post.title,
+	href: post.url,
+}));
+
+const description =
+	'Computer Science student at Multimedia University aiming for DevOps and SRE roles, writing about observability. Ex-intern at iFAST Global Hub AI and MoneyLion.';
+const jsonLd = graph({
+	'@type': 'ProfilePage',
+	url: absoluteUrl(originalPath('/')),
+	name: site.title,
+	description,
+	mainEntity: personSchema((await defaultImage()).url),
+});
+---
+
+<Layout description={description} type="profile" jsonLd={jsonLd}>
+	<header class="intro">
+		<Image
+			class="portrait"
+			src={portrait}
+			alt={`Portrait of ${site.name}`}
+			width={96}
+			height={96}
+			densities={[1, 2]}
+			fit="cover"
+			loading="eager"
+		/>
+		<h1 class="page-title">{site.name}</h1>
+	</header>
+	<p class="lede">
+		I'm a Computer Science student at Multimedia University working towards DevOps and Site
+		Reliability Engineering roles. I've interned as a full stack engineer at <a
+			href="/original/experience/ifast-global-hub-ai">iFAST Global Hub AI</a
+		> and as a web engineer at <a href="/original/experience/moneylion">MoneyLion</a>. Outside of work, I've
+		spent most of my time at university building communities: I was President of <a
+			href="/original/experience/it-society-president">IT Society</a
+		> and <a href="/original/experience/hackerspace-mmu-president">Hackerspace MMU</a>, and directed <a
+			href="/original/experience/barcamp-cyberjaya-2024">BarCamp Cyberjaya</a
+		>. These days I'm learning observability with OpenTelemetry and the VictoriaMetrics stack, and
+		writing about what I learn on <a href="/original/blog">my blog</a>.
+	</p>
+
+	<h2 class="section-title">Experience</h2>
+	<EntryList entries={work} />
+	<a class="more-link" href="/original/experience#work">all experience →</a>
+
+	<h2 class="section-title">Recent Projects</h2>
+	<EntryList entries={projects} />
+	<a class="more-link" href="/original/projects">all projects →</a>
+
+	<h2 class="section-title">Volunteer Highlights</h2>
+	<EntryList entries={volunteer} />
+	<a class="more-link" href="/original/experience#volunteer">all volunteer experience →</a>
+
+	{
+		writing.length > 0 && (
+			<>
+				<h2 class="section-title">Writing</h2>
+				<EntryList entries={writing} />
+				<a class="more-link" href="/original/blog">
+					all posts →
+				</a>
+			</>
+		)
+	}
+</Layout>
+
+<style>
+	.intro {
+		display: flex;
+		align-items: center;
+		gap: 1.25rem;
+		margin-bottom: 2rem;
+	}
+
+	.intro .page-title {
+		margin: 0;
+	}
+
+	.portrait {
+		flex: 0 0 auto;
+		width: 6rem;
+		height: 6rem;
+		border-radius: 0.75rem;
+		object-fit: cover;
+		filter: grayscale(1);
+	}
+</style>

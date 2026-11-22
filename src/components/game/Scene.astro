@@ -1,0 +1,377 @@
+---
+/**
+ * The world behind every screen: mist and light from above, shapes out of
+ * focus in the dark, and motes of light drifting up through it.
+ *
+ * `title` is the pale, misty hall behind the title menu; `cavern` the darker
+ * underground behind every other screen.
+ */
+interface Props {
+	variant?: 'title' | 'cavern';
+}
+
+const { variant = 'cavern' } = Astro.props;
+
+// A fixed seed, so every build draws the same silhouettes.
+function random(seed: number) {
+	return () => {
+		seed |= 0;
+		seed = (seed + 0x6d2b79f5) | 0;
+		let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+		t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+		return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+	};
+}
+const rand = random(variant === 'title' ? 11 : 23);
+const r = (min: number, max: number) => min + rand() * (max - min);
+const n = (v: number) => Math.round(v);
+
+// Stalactites along the cavern roof: long near the walls, short over the middle.
+const roof: string[] = [];
+for (let x = -20; x < 1640; x += r(34, 78)) {
+	const edge = Math.abs(x - 800) / 800;
+	const length = r(30, 90) + edge * edge * r(120, 260);
+	const width = r(26, 60) + edge * 30;
+	const tip = x + r(-8, 8);
+	roof.push(
+		`M${n(x - width / 2)} -10C${n(x - width / 3)} ${n(length * 0.45)} ${n(tip - 4)} ${n(length * 0.85)} ${n(tip)} ${n(length)}C${n(tip + 4)} ${n(length * 0.85)} ${n(x + width / 3)} ${n(length * 0.45)} ${n(x + width / 2)} -10Z`,
+	);
+}
+
+// Spiked grass at the foot of the walls.
+const grass: string[] = [];
+for (const [from, to] of [
+	[-20, 420],
+	[1180, 1620],
+]) {
+	for (let x = from; x < to; x += r(9, 22)) {
+		const edge = from < 800 ? 1 - (x - from) / (to - from) : (x - from) / (to - from);
+		const height = r(18, 50) + edge * r(40, 110);
+		const lean = r(-18, 18);
+		grass.push(`M${n(x - 5)} 905L${n(x + lean)} ${n(900 - height)}L${n(x + 5)} 905Z`);
+	}
+}
+---
+
+<div class="scene" data-variant={variant} aria-hidden="true">
+	<div class="scene-light"></div>
+	<div class="scene-shafts"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+	{
+		variant === 'title' ? (
+			<svg class="scene-shapes" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice">
+				<path d="M-40 940V420C-30 330 40 270 120 262C188 256 236 300 250 372C262 436 240 520 268 600C300 690 300 820 290 940Z" />
+				<ellipse cx="150" cy="890" rx="330" ry="170" />
+				<ellipse cx="520" cy="980" rx="380" ry="140" />
+				<ellipse cx="1120" cy="990" rx="420" ry="150" />
+				<path d="M1640 940C1560 760 1470 640 1330 560C1420 700 1460 800 1470 940Z" />
+				<path d="M1640 900C1600 700 1580 520 1640 380C1570 470 1520 640 1520 900Z" />
+				<path d="M1640 940C1500 830 1370 790 1230 800C1360 850 1450 900 1500 960Z" />
+				<path d="M1600 940C1540 820 1520 700 1560 600C1490 680 1460 820 1480 950Z" />
+			</svg>
+		) : (
+			<svg class="scene-shapes" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice">
+				<path d={roof.join('')} />
+				<path d={grass.join('')} />
+				<ellipse cx="-40" cy="520" rx="170" ry="520" />
+				<ellipse cx="1640" cy="480" rx="170" ry="520" />
+				<ellipse cx="260" cy="960" rx="420" ry="120" />
+				<ellipse cx="1320" cy="970" rx="440" ry="120" />
+			</svg>
+		)
+	}
+	<div class="scene-mist"><i></i><i></i></div>
+	<canvas class="scene-motes" data-variant={variant}></canvas>
+	<div class="scene-shade"></div>
+</div>
+
+<script>
+	// Motes of light drifting up and twinkling, and, in the title hall, dark
+	// specks of dust falling through the mist. Painted onto one canvas.
+	type Particle = {
+		x: number;
+		y: number;
+		size: number;
+		rise: number;
+		sway: number;
+		phase: number;
+		twinkle: number;
+		alpha: number;
+		dark: boolean;
+	};
+
+	const canvas = document.querySelector<HTMLCanvasElement>('.scene-motes');
+	const context = canvas?.getContext('2d');
+
+	if (canvas && context) {
+		const title = canvas.dataset.variant === 'title';
+		const still = matchMedia('(prefers-reduced-motion: reduce)');
+		let width = 0;
+		let height = 0;
+		let particles: Particle[] = [];
+		let frame = 0;
+		let last = 0;
+
+		// Soft round sprites, drawn once and stamped for every particle.
+		const sprite = (inner: string, outer: string) => {
+			const s = document.createElement('canvas');
+			s.width = s.height = 64;
+			const c = s.getContext('2d')!;
+			const g = c.createRadialGradient(32, 32, 0, 32, 32, 32);
+			g.addColorStop(0, inner);
+			g.addColorStop(0.28, inner);
+			g.addColorStop(1, outer);
+			c.fillStyle = g;
+			c.fillRect(0, 0, 64, 64);
+			return s;
+		};
+		const light = sprite('rgba(255,255,255,1)', 'rgba(220,230,255,0)');
+		const dust = sprite('rgba(3,4,6,0.95)', 'rgba(3,4,6,0)');
+
+		const spawn = (anywhere: boolean): Particle => {
+			const dark = title && Math.random() < 0.22;
+			return {
+				x: Math.random() * width,
+				y: anywhere ? Math.random() * height : dark ? -20 : height + 20,
+				size: dark ? 7 + Math.random() * 16 : 2 + Math.random() * (Math.random() < 0.15 ? 9 : 4.5),
+				rise: dark ? -(4 + Math.random() * 8) : 6 + Math.random() * 16,
+				sway: 6 + Math.random() * 18,
+				phase: Math.random() * Math.PI * 2,
+				twinkle: 0.4 + Math.random() * 1.2,
+				alpha: dark ? 0.55 + Math.random() * 0.35 : (title ? 0.45 : 0.32) + Math.random() * 0.45,
+				dark,
+			};
+		};
+
+		const resize = () => {
+			const ratio = Math.min(window.devicePixelRatio || 1, 2);
+			width = window.innerWidth;
+			height = window.innerHeight;
+			canvas.width = Math.round(width * ratio);
+			canvas.height = Math.round(height * ratio);
+			context.setTransform(ratio, 0, 0, ratio, 0, 0);
+			// Keep the motes where they are through small changes (a phone's address
+			// bar sliding away fires a resize); scatter afresh only for a new screen size.
+			const count = Math.round(Math.min(96, Math.max(26, (width * height) / 15000)) * (title ? 1 : 0.7));
+			if (Math.abs(count - particles.length) > count * 0.25) {
+				particles = Array.from({ length: count }, () => spawn(true));
+			}
+		};
+
+		const draw = (time: number) => {
+			const seconds = time / 1000;
+			const step = last ? Math.min(0.05, seconds - last) : 0;
+			last = seconds;
+			context.clearRect(0, 0, width, height);
+			for (const p of particles) {
+				p.y -= p.rise * step;
+				if (p.y < -30 || p.y > height + 30) Object.assign(p, spawn(false));
+				const x = p.x + Math.sin(seconds * 0.35 + p.phase) * p.sway;
+				const glow = p.dark ? 1 : 0.55 + 0.45 * Math.sin(seconds * p.twinkle + p.phase);
+				context.globalAlpha = p.alpha * glow;
+				context.drawImage(p.dark ? dust : light, x - p.size, p.y - p.size, p.size * 2, p.size * 2);
+			}
+			context.globalAlpha = 1;
+		};
+
+		const loop = (time: number) => {
+			draw(time);
+			frame = requestAnimationFrame(loop);
+		};
+
+		const start = () => {
+			cancelAnimationFrame(frame);
+			last = 0;
+			if (still.matches || document.hidden) draw(0);
+			else frame = requestAnimationFrame(loop);
+		};
+
+		resize();
+		start();
+		window.addEventListener('resize', () => {
+			resize();
+			start();
+		});
+		document.addEventListener('visibilitychange', start);
+		still.addEventListener('change', start);
+	}
+</script>
+
+<style>
+	.scene {
+		position: fixed;
+		inset: 0;
+		z-index: 0;
+		overflow: hidden;
+		pointer-events: none;
+		background: radial-gradient(ellipse 95% 75% at 50% 32%, #161c28 0%, #0a0d13 52%, #030406 100%);
+	}
+
+	.scene[data-variant='title'] {
+		background: radial-gradient(ellipse 110% 85% at 50% 30%, #3a3f48 0%, #1d2129 42%, #0a0b0e 78%, #050607 100%);
+	}
+
+	.scene > * {
+		position: absolute;
+		inset: 0;
+	}
+
+	/* Light pouring down from above. */
+	.scene-light {
+		background: radial-gradient(ellipse 46% 40% at 50% 8%, rgba(150, 170, 205, 0.16), transparent 72%);
+	}
+
+	[data-variant='title'] .scene-light {
+		background:
+			radial-gradient(ellipse 34% 46% at 50% 18%, rgba(214, 210, 206, 0.42), transparent 70%),
+			radial-gradient(ellipse 60% 60% at 50% 30%, rgba(150, 150, 156, 0.2), transparent 75%);
+	}
+
+	.scene-shafts i {
+		position: absolute;
+		top: -10%;
+		height: 85%;
+		width: var(--w);
+		left: var(--x);
+		background: linear-gradient(to bottom, rgba(226, 228, 234, 0.3), rgba(226, 228, 234, 0.1) 55%, transparent);
+		filter: blur(16px);
+		opacity: 0.5;
+		transform: skewX(var(--skew, 0deg));
+		transform-origin: top;
+	}
+
+	.scene-shafts i:nth-child(1) {
+		--x: 34%;
+		--w: 5vw;
+		--skew: 4deg;
+	}
+
+	.scene-shafts i:nth-child(2) {
+		--x: 41%;
+		--w: 2.6vw;
+		--skew: 2deg;
+	}
+
+	.scene-shafts i:nth-child(3) {
+		--x: 46.5%;
+		--w: 7vw;
+	}
+
+	.scene-shafts i:nth-child(4) {
+		--x: 55%;
+		--w: 3vw;
+		--skew: -2deg;
+	}
+
+	.scene-shafts i:nth-child(5) {
+		--x: 60%;
+		--w: 5.5vw;
+		--skew: -4deg;
+	}
+
+	.scene-shafts i:nth-child(6) {
+		--x: 67%;
+		--w: 2vw;
+		--skew: -6deg;
+	}
+
+	.scene[data-variant='cavern'] .scene-shafts {
+		opacity: 0.32;
+	}
+
+	.scene[data-variant='cavern'] .scene-shafts i:nth-child(n + 4) {
+		display: none;
+	}
+
+	/* Shapes in the dark, too near or too far to be in focus. */
+	.scene-shapes {
+		width: 100%;
+		height: 100%;
+		fill: #050608;
+		filter: blur(7px);
+		opacity: 0.92;
+	}
+
+	[data-variant='title'] .scene-shapes {
+		fill: #08090c;
+		filter: blur(22px);
+		opacity: 0.88;
+	}
+
+	/* Banks of mist, drifting. */
+	.scene-mist i {
+		position: absolute;
+		width: 70vw;
+		height: 45vh;
+		border-radius: 50%;
+		background: radial-gradient(closest-side, rgba(190, 196, 210, 0.08), transparent);
+		filter: blur(10px);
+	}
+
+	.scene-mist i:first-child {
+		left: -10vw;
+		top: 40vh;
+	}
+
+	.scene-mist i:last-child {
+		right: -15vw;
+		top: 20vh;
+	}
+
+	[data-variant='title'] .scene-mist i {
+		background: radial-gradient(closest-side, rgba(210, 210, 214, 0.12), transparent);
+	}
+
+	.scene-motes {
+		width: 100%;
+		height: 100%;
+	}
+
+	/* Darkness closing in at the edges. */
+	.scene-shade {
+		background: radial-gradient(ellipse 85% 85% at 50% 45%, transparent 50%, rgba(0, 0, 0, 0.72) 100%);
+	}
+
+	@media (prefers-reduced-motion: no-preference) {
+		.scene-shafts i {
+			animation: breathe 11s ease-in-out infinite alternate;
+		}
+
+		.scene-shafts i:nth-child(2n) {
+			animation-duration: 14s;
+			animation-delay: -5s;
+		}
+
+		.scene-shafts i:nth-child(3n) {
+			animation-duration: 9s;
+			animation-delay: -3s;
+		}
+
+		.scene-mist i:first-child {
+			animation: drift 46s ease-in-out infinite alternate;
+		}
+
+		.scene-mist i:last-child {
+			animation: drift 60s ease-in-out -20s infinite alternate-reverse;
+		}
+	}
+
+	@keyframes breathe {
+		from {
+			opacity: 0.25;
+		}
+
+		to {
+			opacity: 0.75;
+		}
+	}
+
+	@keyframes drift {
+		from {
+			transform: translateX(-6vw);
+		}
+
+		to {
+			transform: translateX(8vw);
+		}
+	}
+</style>

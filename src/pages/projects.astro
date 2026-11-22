@@ -1,165 +1,574 @@
 ---
 import Layout from '../layouts/Layout.astro';
-import StackList from '../components/StackList.astro';
-import { site } from '../data/site';
-import { getProjects } from '../lib/projects';
-import { absoluteUrl, breadcrumbSchema, graph, personId, personSchema } from '../lib/seo';
+import Back from '../components/game/Back.astro';
+import Emblem from '../components/game/Emblem.astro';
+import MenuLink from '../components/game/MenuLink.astro';
+import Ornament from '../components/game/Ornament.astro';
+import ScreenTitle from '../components/game/ScreenTitle.astro';
+import Tabs from '../components/game/Tabs.astro';
+import type { EmblemName } from '../lib/emblems';
+import { getProjects, projectsDescription, projectsSchema } from '../lib/projects';
+import { neighbours } from '../lib/screens';
+import { techIconPath } from '../lib/tech-icons';
 
 const projects = await getProjects();
 
-const description =
-	"Tharshen's projects: observability with VictoriaMetrics and OpenTelemetry, a Kubernetes platform lab, and community tools.";
-const jsonLd = graph(
-	{
-		'@type': 'CollectionPage',
-		url: absoluteUrl('/projects'),
-		name: 'Projects',
-		description,
-		author: { '@id': personId },
-		mainEntity: {
-			'@type': 'ItemList',
-			itemListElement: projects.map(({ data }, i) => ({
-				'@type': 'ListItem',
-				position: i + 1,
-				item: {
-					'@type': 'SoftwareSourceCode',
-					name: data.name,
-					description: data.summary,
-					codeRepository: data.repo,
-					...(data.site && { url: data.site }),
-					keywords: data.stack.join(', '),
-					author: { '@id': personId },
-				},
-			})),
-		},
-	},
-	personSchema(),
-	breadcrumbSchema([
-		{ name: 'Home', path: '/' },
-		{ name: 'Projects', path: '/projects' },
-	]),
-);
+/** Each project's medallion. */
+const emblems: Record<string, EmblemName> = {
+	'observability-victoriametrics': 'eye',
+	'show-and-tell-tracker': 'hourglass',
+	'hackerspace-ecosystem': 'hive',
+	'k8s-platform-lab': 'helm',
+};
+
+const charms = projects.map(({ id, data }) => ({
+	id,
+	...data,
+	year: data.startDate.getUTCFullYear(),
+	emblem: emblems[id] ?? 'cog',
+	tools: data.stack.map((name) => ({ name, path: techIconPath(name) })),
+}));
+
+const { previous, next } = neighbours('/projects');
 ---
 
-<Layout title="Projects" description={description} jsonLd={jsonLd}>
-	<h1 class="page-title">Projects</h1>
-	<p class="lede">
-		Things I've built, mostly to learn DevOps, SRE and observability by doing. The details live in
-		each repository, and there's more on <a href={site.links.github} target="_blank"
-			rel="noopener noreferrer">my GitHub</a
-		>.
-	</p>
+<Layout title="Projects" description={projectsDescription} jsonLd={projectsSchema(projects)} back="/" withEmblems>
+	<div class="screen">
+		<Tabs current="/projects" />
+		<main id="main" class="inventory">
+			<div class="frame" data-enter style="--delay: 150">
+				<Ornament name="corner" class="corner" />
+				<Ornament name="corner" class="corner" />
+				<Ornament name="corner" class="corner" />
+				<Ornament name="corner" class="corner" />
+				<a class="side side-previous" href={previous.path} aria-hidden="true" tabindex="-1" title={previous.label}>
+					<Ornament name="side-arrow" />
+				</a>
+				<a class="side side-next" href={next.path} aria-hidden="true" tabindex="-1" title={next.label}>
+					<Ornament name="side-arrow" />
+				</a>
 
-	<ul class="projects">
-		{
-			projects.map(({ data }) => (
-				<li>
-					<h2 class="project-name">
-						<a
-							href={data.repo}
-							target="_blank"
-							rel="noopener noreferrer"
-							data-posthog-project-repository={data.name}
-						>
-							{data.name}
-						</a>
-					</h2>
-					<p class="justify">{data.summary}</p>
-					{data.stack.length > 0 && <StackList stack={data.stack} />}
-					<p class="links">
-						<a
-							class="more-link"
-							href={data.repo}
-							target="_blank"
-							rel="noopener noreferrer"
-							data-posthog-project-repository={data.name}
-						>
-							repository ↗
-						</a>
-						{data.site && (
-							<a
-								class="more-link"
-								href={data.site}
-								target="_blank"
-								rel="noopener noreferrer"
-								data-posthog-project-live-site={data.name}
-							>
-								live site ↗
-							</a>
-						)}
-						{data.writeup && (
-							<a class="more-link" href={data.writeup}>
-								write-up →
-							</a>
-						)}
-					</p>
-				</li>
-			))
-		}
-	</ul>
+				<ScreenTitle>Projects</ScreenTitle>
+
+				<div class="panes">
+					<section class="pane-list" aria-labelledby="pinned">
+						<h2 class="pane-label" id="pinned">Pinned on GitHub</h2>
+						<ol class="charms" data-menu data-keys>
+							{
+								charms.map((charm) => (
+									<li class="charm" data-item data-key={charm.id}>
+										<a class="charm-link" href={`#${charm.id}`}>
+											<span class="medal">
+												<Emblem name={charm.emblem} />
+												<Ornament name="bracket" class="medal-corner" />
+												<Ornament name="bracket" class="medal-corner" />
+												<Ornament name="bracket" class="medal-corner" />
+												<Ornament name="bracket" class="medal-corner" />
+											</span>
+											<span class="charm-name">{charm.name}</span>
+											<span class="charm-year">{charm.year}</span>
+										</a>
+									</li>
+								))
+							}
+						</ol>
+					</section>
+
+					<div class="pane-detail">
+						{
+							charms.map((charm) => (
+								<article class="detail" id={charm.id} data-detail={charm.id} aria-labelledby={`${charm.id}-name`}>
+									<h2 class="detail-name" id={`${charm.id}-name`}>
+										{charm.name}
+									</h2>
+									<div class="detail-stack">
+										<span class="detail-label">Stack</span>
+										<ul class="tools" aria-label="Tools used">
+											{charm.tools.map((tool) => (
+												<li class="tool">
+													<span class="notch" aria-hidden="true">
+														<svg viewBox="0 0 24 24">
+															{tool.path ? <path d={tool.path} /> : <path d="M12 3 21 12 12 21 3 12Z" />}
+														</svg>
+													</span>
+													{tool.name}
+												</li>
+											))}
+										</ul>
+									</div>
+									<span class="medal medal-large" aria-hidden="true">
+										<Emblem name={charm.emblem} />
+									</span>
+									<p class="detail-summary">{charm.summary}</p>
+									<ul class="actions">
+										<li>
+											<MenuLink
+												href={charm.repo}
+												target="_blank"
+												rel="noopener noreferrer"
+												item={false}
+												data-posthog-project-repository={charm.name}
+											>
+												Repository <span aria-hidden="true">↗</span>
+											</MenuLink>
+										</li>
+										{charm.site && (
+											<li>
+												<MenuLink
+													href={charm.site}
+													target="_blank"
+													rel="noopener noreferrer"
+													item={false}
+													data-posthog-project-live-site={charm.name}
+												>
+													Live Site <span aria-hidden="true">↗</span>
+												</MenuLink>
+											</li>
+										)}
+										{charm.writeup && (
+											<li>
+												<MenuLink href={charm.writeup} item={false}>
+													Write-up
+												</MenuLink>
+											</li>
+										)}
+									</ul>
+								</article>
+							))
+						}
+					</div>
+				</div>
+
+				<Ornament name="base" class="frame-foot" />
+			</div>
+
+			<Back href="/" to="the title menu" />
+		</main>
+	</div>
 </Layout>
 
-<script is:inline>
-	document.querySelectorAll('[data-posthog-project-repository]').forEach((link) => {
-		link.addEventListener('click', () => {
-			window.posthog?.capture('project_repository_opened', {
-				project_name: link.dataset.posthogProjectRepository,
-			});
-			window.posthog?.logger?.info('portfolio project repository opened', {
-				project_name: link.dataset.posthogProjectRepository,
-			});
-		});
-	});
+<script>
+	// Choosing a medallion shows its project in the right-hand pane, as the
+	// game's inventory does; on narrow screens every project is shown in turn.
+	const list = document.querySelector<HTMLElement>('.charms');
+	const details = [...document.querySelectorAll<HTMLElement>('[data-detail]')];
+	const wide = matchMedia('(min-width: 960px)');
 
-	document.querySelectorAll('[data-posthog-project-live-site]').forEach((link) => {
-		link.addEventListener('click', () => {
-			window.posthog?.capture('project_live_site_opened', {
-				project_name: link.dataset.posthogProjectLiveSite,
-			});
-			window.posthog?.logger?.info('portfolio project live site opened', {
-				project_name: link.dataset.posthogProjectLiveSite,
-			});
+	if (list && details.length) {
+		const show = (key: string | undefined) => {
+			for (const detail of details) detail.toggleAttribute('data-hidden', detail.dataset.detail !== key);
+		};
+		list.addEventListener('menuselect', (event) => {
+			show(((event as CustomEvent).detail as HTMLElement).dataset.key);
 		});
-	});
+		list.addEventListener('click', (event) => {
+			const link = (event.target as Element).closest('a');
+			if (link && wide.matches) event.preventDefault();
+		});
+		const chosen = list.querySelector<HTMLElement>('[data-item][data-selected]') ?? list.querySelector<HTMLElement>('[data-item]');
+		show(chosen?.dataset.key);
+	}
 </script>
 
 <style>
-	.projects {
-		list-style: none;
+	.inventory {
+		padding: clamp(0.25rem, 1.5vh, 1rem) var(--gutter) 0;
+	}
+
+	/* The panel: open on all sides, held by its four inked corners. */
+	.frame {
+		position: relative;
+		width: min(100%, 80rem);
+		margin: 0 auto;
+		padding: clamp(1.75rem, 4.5vh, 3rem) clamp(2.5rem, 7vw, 6.5rem) clamp(3.75rem, 8vh, 5rem);
+	}
+
+	.frame > :global(.corner) {
+		position: absolute;
+		width: clamp(5rem, 3rem + 7vw, 10rem);
+		height: auto;
+		color: var(--pale);
+	}
+
+	.frame > :global(.corner:nth-of-type(1)) {
+		top: 0;
+		left: 0;
+	}
+
+	.frame > :global(.corner:nth-of-type(2)) {
+		top: 0;
+		right: 0;
+		transform: scaleX(-1);
+	}
+
+	.frame > :global(.corner:nth-of-type(3)) {
+		bottom: 0;
+		left: 0;
+		transform: scaleY(-1);
+	}
+
+	.frame > :global(.corner:nth-of-type(4)) {
+		bottom: 0;
+		right: 0;
+		transform: scale(-1);
+	}
+
+	.side {
+		position: absolute;
+		top: 50%;
+		display: grid;
+		place-items: center;
+		width: 3rem;
+		height: 7rem;
+		margin-top: -3.5rem;
+		color: var(--pale);
+		transition: filter 0.2s;
+	}
+
+	.side:hover {
+		filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.5));
+	}
+
+	.side > :global(.orn) {
+		width: 1.9rem;
+		height: auto;
+	}
+
+	.side-previous {
+		left: -0.5rem;
+	}
+
+	.side-next {
+		right: -0.5rem;
+		transform: scaleX(-1);
+	}
+
+	.frame > :global(.frame-foot) {
+		position: absolute;
+		left: 50%;
+		bottom: clamp(0.75rem, 2.5vh, 1.5rem);
+		width: clamp(10rem, 22vw, 15rem);
+		height: auto;
+		translate: -50% 0;
+		color: var(--pale);
+	}
+
+	.panes {
+		--gap: clamp(2rem, 4.5vw, 4rem);
+		display: grid;
+		grid-template-columns: minmax(0, 0.95fr) minmax(0, 1fr);
+		margin-top: clamp(1.5rem, 4vh, 2.5rem);
+	}
+
+	.pane-list {
+		position: relative;
+		padding-right: var(--gap);
+	}
+
+	.pane-detail {
+		padding-left: var(--gap);
+	}
+
+	/* The hairline between the panes. */
+	.pane-list::after {
+		content: '';
+		position: absolute;
+		top: 0;
+		bottom: 0;
+		right: 0;
+		width: 1px;
+		background: linear-gradient(to bottom, transparent, rgba(243, 240, 232, 0.55) 15%, rgba(243, 240, 232, 0.55) 85%, transparent);
+	}
+
+	.pane-label {
+		margin: 0 0 1.1rem;
+		font-family: var(--font-book);
+		font-weight: 400;
+		font-size: 1.35rem;
+		color: var(--pale);
+		text-shadow: var(--glow-text);
+	}
+
+	.charms {
+		display: grid;
+		gap: 0.6rem;
 		margin: 0;
 		padding: 0;
+		list-style: none;
 	}
 
-	li + li {
-		margin-top: 2.25rem;
-	}
-
-	.project-name {
-		font-size: 1.1875rem;
-		letter-spacing: -0.01em;
-		margin: 0 0 0.5rem;
-	}
-
-	.project-name a {
+	.charm-link {
+		position: relative;
+		display: grid;
+		grid-template-columns: auto minmax(0, 1fr) auto;
+		align-items: center;
+		gap: 1.25rem;
+		min-height: 44px;
+		padding: 0.7rem 1rem 0.7rem 0.75rem;
+		color: var(--soft);
 		text-decoration: none;
+		transition: color 0.25s;
 	}
 
-	.project-name a:hover {
-		text-decoration: underline;
-		text-underline-offset: 3px;
+	/* The chosen row: a darker band edged with hairlines, as in a shop list. */
+	.charm-link::before {
+		content: '';
+		position: absolute;
+		inset: 0;
+		z-index: -1;
+		background:
+			linear-gradient(to right, transparent, rgba(243, 240, 232, 0.55) 30%, rgba(243, 240, 232, 0.55) 70%, transparent) top / 100% 1px no-repeat,
+			linear-gradient(to right, transparent, rgba(243, 240, 232, 0.55) 30%, rgba(243, 240, 232, 0.55) 70%, transparent) bottom / 100% 1px no-repeat,
+			linear-gradient(to right, transparent, rgba(120, 140, 200, 0.14) 25%, rgba(120, 140, 200, 0.14) 75%, transparent);
+		opacity: 0;
+		transition: opacity 0.3s;
 	}
 
-	li p {
-		margin: 0.5rem 0;
+	.charm {
+		position: relative;
+		isolation: isolate;
 	}
 
-	.links {
+	.charm[data-selected] .charm-link {
+		color: #fff;
+	}
+
+	.charm[data-selected] .charm-link::before {
+		opacity: 1;
+	}
+
+	.charm-link:focus-visible {
+		outline: none;
+	}
+
+	.charm-name {
+		font-size: clamp(1.1rem, 1rem + 0.35vw, 1.3rem);
+		line-height: 1.3;
+		text-wrap: balance;
+	}
+
+	.charm[data-selected] .charm-name {
+		text-shadow: var(--glow-text);
+	}
+
+	.charm-year {
+		font-size: 1rem;
+		color: var(--dim);
+	}
+
+	/* Medallions: an emblem in a ringed disc; the chosen one bracketed and lit. */
+	.medal {
+		position: relative;
+		display: grid;
+		place-items: center;
+		width: 3.3rem;
+		aspect-ratio: 1;
+		border-radius: 50%;
+		background: radial-gradient(circle at 50% 35%, #2b3349, #0a0d14 72%);
+		box-shadow:
+			0 0 0 1.5px rgba(243, 240, 232, 0.6),
+			0 0 0 4px rgba(3, 4, 6, 0.9),
+			0 0 0 5px rgba(243, 240, 232, 0.22),
+			inset 0 0 12px #000;
+		transition: box-shadow 0.3s;
+	}
+
+	.medal > :global(.emblem) {
+		width: 62%;
+		color: var(--soft);
+		transition:
+			color 0.3s,
+			filter 0.3s;
+	}
+
+	.medal > :global(.medal-corner) {
+		position: absolute;
+		width: 38%;
+		height: auto;
+		color: var(--pale);
+		opacity: 0;
+		transition:
+			opacity 0.25s,
+			translate 0.3s var(--ease);
+	}
+
+	.medal > :global(.medal-corner:nth-of-type(2)) {
+		top: -24%;
+		left: -24%;
+		translate: -4px -4px;
+	}
+
+	.medal > :global(.medal-corner:nth-of-type(3)) {
+		top: -24%;
+		right: -24%;
+		transform: scaleX(-1);
+		translate: 4px -4px;
+	}
+
+	.medal > :global(.medal-corner:nth-of-type(4)) {
+		bottom: -24%;
+		left: -24%;
+		transform: scaleY(-1);
+		translate: -4px 4px;
+	}
+
+	.medal > :global(.medal-corner:nth-of-type(5)) {
+		bottom: -24%;
+		right: -24%;
+		transform: scale(-1);
+		translate: 4px 4px;
+	}
+
+	.charm[data-selected] .medal {
+		box-shadow:
+			0 0 0 1.5px rgba(255, 255, 255, 0.95),
+			0 0 0 4px rgba(3, 4, 6, 0.9),
+			0 0 0 5px rgba(243, 240, 232, 0.35),
+			0 0 26px rgba(120, 150, 255, 0.5),
+			inset 0 0 14px rgba(120, 150, 255, 0.35);
+	}
+
+	.charm[data-selected] .medal > :global(.emblem) {
+		color: #fff;
+		filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.7));
+	}
+
+	.charm[data-selected] .medal > :global(.medal-corner) {
+		opacity: 1;
+		translate: 0 0;
+	}
+
+	/* The detail pane. */
+	.detail {
+		display: grid;
+		justify-items: center;
+		text-align: center;
+	}
+
+	.detail + .detail {
+		margin-top: 3.5rem;
+	}
+
+	.detail-name {
+		margin: 0;
+		font-family: var(--font-book);
+		font-weight: 500;
+		font-size: clamp(1.6rem, 1.3rem + 1.1vw, 2.3rem);
+		line-height: 1.2;
+		letter-spacing: 0.01em;
+		text-wrap: balance;
+		text-shadow: var(--glow-text);
+	}
+
+	.detail-stack {
+		display: grid;
+		justify-items: center;
+		gap: 0.6rem;
+		margin-top: 0.9rem;
+	}
+
+	.detail-label {
+		font-size: 1.1rem;
+		color: var(--soft);
+	}
+
+	.tools {
 		display: flex;
 		flex-wrap: wrap;
-		gap: 0 1.25rem;
+		justify-content: center;
+		gap: 0.55rem 1.1rem;
+		margin: 0;
+		padding: 0;
+		list-style: none;
 	}
 
-	.links .more-link {
-		margin-top: 0;
+	.tool {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.45rem;
+		font-size: 1rem;
+		color: var(--soft);
+	}
+
+	.notch {
+		display: grid;
+		place-items: center;
+		width: 1.75rem;
+		aspect-ratio: 1;
+		border-radius: 50%;
+		background: radial-gradient(circle, #2a3142, #0b0e15 75%);
+		box-shadow:
+			0 0 0 1px rgba(243, 240, 232, 0.6),
+			0 0 8px rgba(255, 255, 255, 0.2);
+	}
+
+	.notch svg {
+		width: 56%;
+		height: 56%;
+		fill: var(--pale);
+	}
+
+	.medal-large {
+		width: clamp(5rem, 4rem + 2.5vw, 6.5rem);
+		margin: 1.25rem 0 0.25rem;
+		box-shadow:
+			0 0 0 2px rgba(255, 255, 255, 0.9),
+			0 0 0 6px rgba(3, 4, 6, 0.9),
+			0 0 0 7px rgba(243, 240, 232, 0.3),
+			0 0 34px rgba(120, 150, 255, 0.4),
+			inset 0 0 18px rgba(120, 150, 255, 0.3);
+	}
+
+	.medal-large > :global(.emblem) {
+		color: #fff;
+		filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.6));
+	}
+
+	.detail-summary {
+		max-width: 34rem;
+		margin: 1rem 0 0;
+		font-size: clamp(1.08rem, 1rem + 0.25vw, 1.22rem);
+		line-height: 1.55;
+		text-align: left;
+		text-wrap: pretty;
+	}
+
+	.actions {
+		display: flex;
+		flex-wrap: wrap;
+		justify-content: center;
+		gap: 0 1.5rem;
+		margin: 1.2rem 0 0;
+		padding: 0;
+		list-style: none;
+	}
+
+	.actions :global(.menu-item) {
+		font-size: clamp(1rem, 0.9rem + 0.35vw, 1.2rem);
+	}
+
+	@media (min-width: 960px) {
+		.detail[data-hidden] {
+			display: none;
+		}
+	}
+
+	@media (max-width: 959px) {
+		.frame {
+			padding-inline: clamp(1.75rem, 6vw, 3rem);
+		}
+
+		.panes {
+			grid-template-columns: minmax(0, 1fr);
+		}
+
+		.pane-detail {
+			padding-left: 0;
+		}
+
+		.pane-list,
+		.side {
+			display: none;
+		}
 	}
 </style>

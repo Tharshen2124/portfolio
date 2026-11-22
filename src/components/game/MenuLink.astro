@@ -1,0 +1,18 @@
+---
+/** A menu item: carved text that the pointers close around when it's chosen. */
+import Ornament from './Ornament.astro';
+import type { HTMLAttributes } from 'astro/types';
+
+type Props = HTMLAttributes<'a'> & {
+	/** Mark this as one of its menu's selectable items. */
+	item?: boolean;
+};
+
+const { item = true, class: className, ...attrs } = Astro.props;
+---
+
+<a class:list={['menu-item', className]} data-item={item ? '' : undefined} {...attrs}>
+	<Ornament name="pointer" class="pointer" />
+	<span class="menu-label"><slot /></span>
+	<Ornament name="pointer" class="pointer pointer-end" />
+</a>

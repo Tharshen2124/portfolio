@@ -1,38 +1,11 @@
 ---
-import { Image } from 'astro:assets';
 import Layout from '../layouts/Layout.astro';
-import EntryList from '../components/EntryList.astro';
+import MenuLink from '../components/game/MenuLink.astro';
+import Ornament from '../components/game/Ornament.astro';
 import { site } from '../data/site';
-import { getExperience, experienceHref, type Experience } from '../lib/experience';
-import { getRecentProjects } from '../lib/projects';
-import { getSubstackFeed } from '../lib/substack';
-import { formatDay, formatMonth } from '../lib/format';
+import { originalPath } from '../lib/original';
+import { sections } from '../lib/screens';
 import { defaultImage, graph, personSchema } from '../lib/seo';
-import portrait from '../assets/tharshen-avatar.jpg';
-
-const writeups = (await getExperience()).filter((entry) => experienceHref(entry));
-const toEntry = (entry: Experience) => ({
-	date: formatMonth(entry.data.startDate),
-	title: entry.data.title,
-	href: experienceHref(entry),
-});
-const work = writeups.filter((entry) => entry.data.category === 'work').map(toEntry);
-const volunteer = writeups
-	.filter((entry) => entry.data.category === 'volunteer' && entry.data.featured)
-	.map(toEntry);
-
-const projects = (await getRecentProjects()).slice(0, 3).map(({ data }) => ({
-	date: formatMonth(data.startDate),
-	title: data.name,
-	href: data.repo,
-}));
-
-const { posts } = await getSubstackFeed();
-const writing = posts.slice(0, 3).map((post) => ({
-	date: formatDay(post.date),
-	title: post.title,
-	href: post.url,
-}));
 
 const description =
 	'Computer Science student at Multimedia University aiming for DevOps and SRE roles, writing about observability. Ex-intern at iFAST Global Hub AI and MoneyLion.';
@@ -43,78 +16,197 @@ const jsonLd = graph({
 	description,
 	mainEntity: personSchema((await defaultImage()).url),
 });
+
+const [firstName, ...rest] = site.name.split(' ');
+const socials = [
+	{ href: site.links.github, label: 'GitHub', id: 'github' },
+	{ href: site.links.linkedin, label: 'LinkedIn', id: 'linkedin' },
+	{ href: site.links.substack, label: 'Substack', id: 'substack' },
+];
 ---
 
-<Layout description={description} type="profile" jsonLd={jsonLd}>
-	<header class="intro">
-		<Image
-			class="portrait"
-			src={portrait}
-			alt={`Portrait of ${site.name}`}
-			width={96}
-			height={96}
-			densities={[1, 2]}
-			fit="cover"
-			loading="eager"
-		/>
-		<h1 class="page-title">{site.name}</h1>
-	</header>
-	<p class="lede">
-		I'm a Computer Science student at Multimedia University working towards DevOps and Site
-		Reliability Engineering roles. I've interned as a full stack engineer at <a
-			href="/experience/ifast-global-hub-ai">iFAST Global Hub AI</a
-		> and as a web engineer at <a href="/experience/moneylion">MoneyLion</a>. Outside of work, I've
-		spent most of my time at university building communities: I was President of <a
-			href="/experience/it-society-president">IT Society</a
-		> and <a href="/experience/hackerspace-mmu-president">Hackerspace MMU</a>, and directed <a
-			href="/experience/barcamp-cyberjaya-2024">BarCamp Cyberjaya</a
-		>. These days I'm learning observability with OpenTelemetry and the VictoriaMetrics stack, and
-		writing about what I learn on <a href="/blog">my blog</a>.
-	</p>
+<Layout description={description} type="profile" jsonLd={jsonLd} scene="title">
+	<script is:inline>
+		// After the first visit this session, the title appears without the long fade.
+		try {
+			if (sessionStorage.getItem('title-seen')) document.documentElement.dataset.revisit = '';
+			sessionStorage.setItem('title-seen', '1');
+		} catch {}
+	</script>
 
-	<h2 class="section-title">Experience</h2>
-	<EntryList entries={work} />
-	<a class="more-link" href="/experience#work">all experience →</a>
+	<main id="main" class="screen title">
+		<header class="crest" data-enter>
+			<Ornament name="base" class="crest-top" />
+			<h1 class="name">
+				<span class="name-first">{firstName}</span>
+				<span class="name-rest">{rest.join(' ')}</span>
+			</h1>
+			<Ornament name="crest" class="crest-foot" />
+		</header>
 
-	<h2 class="section-title">Recent Projects</h2>
-	<EntryList entries={projects} />
-	<a class="more-link" href="/projects">all projects →</a>
+		<nav class="main-menu" aria-label="Main menu" data-enter style="--delay: 700">
+			<ul class="menu" data-menu data-keys>
+				<li>
+					<MenuLink href={originalPath('/')}>Original Site (For HRs)</MenuLink>
+				</li>
+				{
+					sections.map(({ path, label }) => (
+						<li>
+							<MenuLink href={path}>{label}</MenuLink>
+						</li>
+					))
+				}
+			</ul>
+		</nav>
 
-	<h2 class="section-title">Volunteer Highlights</h2>
-	<EntryList entries={volunteer} />
-	<a class="more-link" href="/experience#volunteer">all volunteer experience →</a>
-
-	{
-		writing.length > 0 && (
-			<>
-				<h2 class="section-title">Writing</h2>
-				<EntryList entries={writing} />
-				<a class="more-link" href="/blog">
-					all posts →
-				</a>
-			</>
-		)
-	}
+		<footer class="corners" data-enter style="--delay: 1100">
+			<p class="tagline">DevOps · SRE · Observability</p>
+			<ul class="socials">
+				{
+					socials.map(({ href, label, id }) => (
+						<li>
+							<a href={href} target="_blank" rel="noopener noreferrer" data-posthog-social-profile={id}>
+								{label}
+								<span aria-hidden="true">↗</span>
+							</a>
+						</li>
+					))
+				}
+			</ul>
+		</footer>
+	</main>
 </Layout>
 
 <style>
-	.intro {
+	.title {
 		display: flex;
+		flex-direction: column;
 		align-items: center;
-		gap: 1.25rem;
-		margin-bottom: 2rem;
+		justify-content: center;
+		gap: clamp(2rem, 7vh, 4.5rem);
+		min-height: 100vh;
+		min-height: 100dvh;
+		padding: clamp(3rem, 9vh, 6rem) var(--gutter) clamp(6rem, 14vh, 8rem);
 	}
 
-	.intro .page-title {
+	.crest {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		width: min(100%, 58rem);
+		animation-duration: 1.8s;
+	}
+
+	.crest > :global(.crest-top) {
+		width: clamp(12rem, 34vw, 27rem);
+		height: auto;
+		transform: scaleY(-1);
+		margin-bottom: clamp(0.4rem, 1.6vh, 1rem);
+	}
+
+	.name {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
 		margin: 0;
+		font-family: var(--font-carved);
+		font-weight: 500;
+		line-height: 1;
+		text-align: center;
+		color: #fff;
 	}
 
-	.portrait {
-		flex: 0 0 auto;
-		width: 6rem;
-		height: 6rem;
-		border-radius: 0.75rem;
-		object-fit: cover;
-		filter: grayscale(1);
+	.name-first {
+		font-size: clamp(3.1rem, 1.4rem + 8vw, 8.75rem);
+		letter-spacing: 0.035em;
+		text-shadow:
+			0 0 36px rgba(255, 255, 255, 0.5),
+			0 0 10px rgba(255, 255, 255, 0.45),
+			0 0 2px rgba(255, 255, 255, 0.8);
+	}
+
+	.name-rest {
+		margin-top: 0.55em;
+		font-size: clamp(0.85rem, 0.7rem + 0.75vw, 1.3rem);
+		letter-spacing: 0.45em;
+		margin-right: -0.45em;
+		color: var(--soft);
+		text-shadow: var(--glow-text);
+	}
+
+	.crest > :global(.crest-foot) {
+		width: clamp(19rem, 74vw, 48rem);
+		height: auto;
+		margin-top: clamp(0.6rem, 2vh, 1.2rem);
+	}
+
+	.main-menu {
+		width: 100%;
+	}
+
+	.corners {
+		position: absolute;
+		inset: auto 0 0;
+		display: flex;
+		flex-wrap: wrap;
+		align-items: flex-end;
+		justify-content: space-between;
+		gap: 0.5rem 1.5rem;
+		padding: 0 var(--gutter) clamp(1rem, 3vh, 2rem);
+		color: var(--dim);
+		font-size: 1rem;
+	}
+
+	.tagline {
+		margin: 0;
+		letter-spacing: 0.04em;
+	}
+
+	.socials {
+		display: flex;
+		gap: 0.25rem 1.25rem;
+		margin: 0;
+		padding: 0;
+		list-style: none;
+	}
+
+	.socials a {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.3em;
+		min-height: 44px;
+		color: var(--soft);
+		text-decoration: none;
+		transition:
+			color 0.2s,
+			text-shadow 0.2s;
+	}
+
+	.socials a:hover {
+		color: #fff;
+		text-shadow: var(--glow-text);
+	}
+
+	:global(html[data-revisit]) [data-enter] {
+		animation-duration: 0.5s;
+		animation-delay: 0s;
+	}
+
+	@media (max-width: 640px) {
+		.corners {
+			flex-direction: column;
+			align-items: center;
+			text-align: center;
+		}
+	}
+
+	@media (max-height: 560px) {
+		.title {
+			justify-content: flex-start;
+		}
+
+		.corners {
+			position: static;
+		}
 	}
 </style>

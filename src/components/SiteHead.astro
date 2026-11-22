@@ -1,0 +1,92 @@
+---
+import PostHog from './posthog.astro';
+import { site } from '../data/site';
+import { absoluteUrl, defaultImage, pagePath, type JsonLd } from '../lib/seo';
+
+export interface SeoProps {
+	title?: string;
+	description?: string;
+	type?: 'website' | 'article' | 'profile';
+	/** Keep the page out of search results (e.g. 404). */
+	noindex?: boolean;
+	/** Markdown copy of this page, advertised to agents via rel="alternate". */
+	markdownUrl?: string;
+	jsonLd?: JsonLd;
+	/**
+	 * Path of the preferred copy when this page repeats another one, so search
+	 * engines index a single URL. Defaults to this page's own path.
+	 */
+	canonicalPath?: string;
+}
+
+interface Props extends SeoProps {
+	/** One colour, or a light and a dark colour for the browser chrome. */
+	themeColor: string | { light: string; dark: string };
+}
+
+const {
+	title,
+	description = site.description,
+	type = 'website',
+	noindex = false,
+	markdownUrl,
+	jsonLd,
+	canonicalPath,
+	themeColor,
+} = Astro.props;
+const pageTitle = title ? `${title} | ${site.title}` : site.title;
+const canonicalURL = absoluteUrl(canonicalPath ?? pagePath(Astro.url));
+const image = await defaultImage();
+---
+
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="icon" href="/favicon.ico" sizes="32x32" />
+<link rel="icon" type="image/png" sizes="192x192" href="/android-chrome-192x192.png" />
+<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+<link rel="manifest" href="/site.webmanifest" />
+<meta name="generator" content={Astro.generator} />
+<title>{pageTitle}</title>
+<meta name="description" content={description} />
+<meta name="author" content={site.name} />
+{noindex && <meta name="robots" content="noindex" />}
+<link rel="canonical" href={canonicalURL} />
+{
+	typeof themeColor === 'string' ? (
+		<meta name="theme-color" content={themeColor} />
+	) : (
+		<>
+			<meta name="theme-color" content={themeColor.light} media="(prefers-color-scheme: light)" />
+			<meta name="theme-color" content={themeColor.dark} media="(prefers-color-scheme: dark)" />
+		</>
+	)
+}
+
+<meta property="og:title" content={pageTitle} />
+<meta property="og:description" content={description} />
+<meta property="og:type" content={type} />
+<meta property="og:url" content={canonicalURL} />
+<meta property="og:site_name" content={site.title} />
+<meta property="og:locale" content={site.locale} />
+<meta property="og:image" content={image.url} />
+<meta property="og:image:width" content={String(image.width)} />
+<meta property="og:image:height" content={String(image.height)} />
+<meta property="og:image:alt" content={image.alt} />
+{type === 'article' && <meta property="article:author" content={site.url} />}
+
+<meta name="twitter:card" content="summary" />
+<meta name="twitter:title" content={pageTitle} />
+<meta name="twitter:description" content={description} />
+<meta name="twitter:image" content={image.url} />
+<meta name="twitter:image:alt" content={image.alt} />
+
+<link rel="sitemap" href="/sitemap-index.xml" />
+<link
+	rel="alternate"
+	type="application/rss+xml"
+	title={`${site.name} on Substack`}
+	href={`${site.substackUrl}/feed`}
+/>
+{markdownUrl && <link rel="alternate" type="text/markdown" href={markdownUrl} />}
+{jsonLd && <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />}
+<PostHog />

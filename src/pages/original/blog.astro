@@ -1,10 +1,11 @@
 ---
-import Layout from '../layouts/Layout.astro';
-import EntryList from '../components/EntryList.astro';
-import { site } from '../data/site';
-import { getSubstackFeed } from '../lib/substack';
-import { formatDay } from '../lib/format';
-import { absoluteUrl, breadcrumbSchema, graph, personId, personSchema } from '../lib/seo';
+import Layout from '../../layouts/OriginalLayout.astro';
+import EntryList from '../../components/original/EntryList.astro';
+import { site } from '../../data/site';
+import { getSubstackFeed } from '../../lib/substack';
+import { formatDay } from '../../lib/format';
+import { absoluteUrl, breadcrumbSchema, graph, personId, personSchema } from '../../lib/seo';
+import { originalPath } from '../../lib/original';
 
 const { description, posts } = await getSubstackFeed();
 const blurb = (description ?? 'Writing about Site Reliability, Observability and DevOps').replace(/\.?$/, '.');
@@ -20,7 +21,7 @@ const pageDescription =
 const jsonLd = graph(
 	{
 		'@type': 'Blog',
-		url: absoluteUrl('/blog'),
+		url: absoluteUrl(originalPath('/blog')),
 		name: title,
 		description: pageDescription,
 		author: { '@id': personId },
@@ -34,8 +35,8 @@ const jsonLd = graph(
 	},
 	personSchema(),
 	breadcrumbSchema([
-		{ name: 'Home', path: '/' },
-		{ name: 'Blog', path: '/blog' },
+		{ name: 'Home', path: originalPath('/') },
+		{ name: 'Blog', path: originalPath('/blog') },
 	]),
 );
 ---

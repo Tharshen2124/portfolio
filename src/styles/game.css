@@ -1,0 +1,344 @@
+/*
+ * The game design: a dark, misty underground with inked filigree, carved
+ * capitals for menus and titles, and a book face for everything you read.
+ */
+
+:root {
+	color-scheme: dark;
+	--void: #030406;
+	--pale: #f3f0e8;
+	--soft: #c9ccd3;
+	--dim: #a2a7b3;
+	--faint: #6d7381;
+	--cream: #ede3cb;
+	--soul: #aebfff;
+	--hair: rgba(243, 240, 232, 0.92);
+	--band-a: rgba(24, 40, 108, 0.94);
+	--band-b: rgba(46, 72, 162, 0.72);
+	--glow-text: 0 0 16px rgba(255, 255, 255, 0.26), 0 0 2px rgba(255, 255, 255, 0.4);
+	--glow-ink: drop-shadow(0 0 4px rgba(255, 255, 255, 0.5));
+	--ease: cubic-bezier(0.22, 0.61, 0.36, 1);
+	--gutter: clamp(1.25rem, 4vw, 3rem);
+}
+
+*,
+*::before,
+*::after {
+	box-sizing: border-box;
+}
+
+html {
+	background: var(--void);
+	color: var(--pale);
+	font-family: var(--font-book);
+	font-size: 100%;
+	font-kerning: normal;
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+	text-size-adjust: 100%;
+}
+
+body {
+	margin: 0;
+	min-height: 100vh;
+	min-height: 100dvh;
+	line-height: 1.55;
+	overflow-x: clip;
+}
+
+a {
+	color: inherit;
+}
+
+::selection {
+	background: rgba(174, 191, 255, 0.35);
+	color: #fff;
+}
+
+:focus-visible {
+	outline: 1px solid rgba(243, 240, 232, 0.75);
+	outline-offset: 5px;
+	border-radius: 2px;
+}
+
+.visually-hidden {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	margin: -1px;
+	padding: 0;
+	overflow: hidden;
+	clip-path: inset(50%);
+	white-space: nowrap;
+}
+
+.skip {
+	position: fixed;
+	top: 1rem;
+	left: 1rem;
+	z-index: 100;
+	padding: 0.7rem 1.1rem;
+	background: var(--pale);
+	color: var(--void);
+	font-family: var(--font-carved);
+	font-weight: 600;
+	text-decoration: none;
+	transform: translateY(-200%);
+}
+
+.skip:focus {
+	transform: none;
+}
+
+/* Everything sits above the scene. */
+.screen {
+	position: relative;
+	z-index: 1;
+}
+
+/* Ornaments: inked in the text colour, with a faint glow. */
+.orn {
+	display: block;
+	fill: currentColor;
+	filter: var(--glow-ink);
+	overflow: visible;
+}
+
+.carved {
+	font-family: var(--font-carved);
+	font-weight: 500;
+	letter-spacing: 0.06em;
+}
+
+/* Title of a screen, with the inked rule under it. */
+.screen-title {
+	margin: 0;
+	font-family: var(--font-carved);
+	font-weight: 500;
+	font-size: clamp(1.85rem, 1.25rem + 2.4vw, 3.05rem);
+	line-height: 1.12;
+	letter-spacing: 0.06em;
+	text-align: center;
+	text-wrap: balance;
+	text-shadow: var(--glow-text);
+}
+
+.rule {
+	display: flex;
+	align-items: center;
+	width: min(100%, 40rem);
+	margin: 0.6rem auto 0;
+	color: var(--pale);
+}
+
+.rule::before,
+.rule::after {
+	content: '';
+	flex: 1;
+	height: 2px;
+	border-radius: 2px;
+	background: linear-gradient(to right, transparent, var(--hair) 55%);
+	box-shadow: 0 0 6px rgba(255, 255, 255, 0.25);
+}
+
+.rule::after {
+	background: linear-gradient(to left, transparent, var(--hair) 55%);
+}
+
+.rule .orn {
+	flex: none;
+	width: clamp(8.5rem, 34%, 13.5rem);
+	height: auto;
+	margin-inline: 0.4rem;
+}
+
+/* Menus: carved items, the chosen one held between two pointers. */
+.menu {
+	display: grid;
+	justify-items: center;
+	gap: clamp(0.1rem, 0.9vh, 0.6rem);
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.menu-item {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.85em;
+	min-height: 44px;
+	padding: 0.3em 0;
+	color: var(--pale);
+	font-family: var(--font-carved);
+	font-weight: 500;
+	font-size: clamp(1.12rem, 0.9rem + 0.8vw, 1.7rem);
+	letter-spacing: 0.06em;
+	line-height: 1.2;
+	text-align: center;
+	text-decoration: none;
+	text-shadow: var(--glow-text);
+	transition: color 0.2s, text-shadow 0.2s;
+}
+
+.pointer {
+	flex: none;
+	width: 1.9em;
+	height: auto;
+	opacity: 0;
+	transform: translateX(-0.45em);
+	transition:
+		opacity 0.22s,
+		transform 0.32s var(--ease);
+}
+
+.pointer-end {
+	transform: scaleX(-1) translateX(-0.45em);
+}
+
+[data-selected] > .pointer,
+[data-selected] .menu-item > .pointer,
+.menu-item:hover > .pointer,
+.menu-item:focus-visible > .pointer {
+	opacity: 1;
+	transform: none;
+}
+
+[data-selected] > .pointer-end,
+[data-selected] .menu-item > .pointer-end,
+.menu-item:hover > .pointer-end,
+.menu-item:focus-visible > .pointer-end {
+	transform: scaleX(-1);
+}
+
+.menu-item:focus-visible {
+	outline: none;
+}
+
+.menu-item[data-selected],
+.menu-item:hover {
+	color: #fff;
+	text-shadow:
+		0 0 18px rgba(255, 255, 255, 0.45),
+		0 0 2px rgba(255, 255, 255, 0.6);
+}
+
+/* A key to press, as the game prints it. */
+.keycap {
+	display: inline-grid;
+	place-items: center;
+	min-width: 1.75em;
+	height: 1.35em;
+	padding: 0 0.32em;
+	border-radius: 0.28em;
+	background: var(--pale);
+	color: var(--void);
+	font-family: var(--font-book);
+	font-weight: 700;
+	font-size: 0.78em;
+	line-height: 1;
+	letter-spacing: 0.02em;
+	text-shadow: none;
+	box-shadow: 0 0 10px rgba(255, 255, 255, 0.22);
+}
+
+@media (hover: none) {
+	.keycap {
+		display: none;
+	}
+}
+
+/* Neighbouring screens, in the top corners. */
+.tabs {
+	display: flex;
+	justify-content: space-between;
+	gap: 1rem;
+	padding: clamp(0.75rem, 2.2vw, 1.6rem) var(--gutter) 0;
+}
+
+.tab {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.6rem;
+	min-height: 44px;
+	color: var(--pale);
+	font-size: clamp(1.05rem, 0.95rem + 0.35vw, 1.3rem);
+	text-decoration: none;
+	transition: text-shadow 0.2s;
+}
+
+.tab:hover {
+	text-shadow: var(--glow-text);
+}
+
+.tab-glyph {
+	font-family: var(--font-carved);
+	font-size: 0.9em;
+}
+
+@media (hover: hover) {
+	.tab-glyph {
+		display: none;
+	}
+}
+
+/* Leaving a screen: Back, at its foot. */
+.back {
+	display: flex;
+	justify-content: center;
+	padding: clamp(2rem, 6vh, 3.5rem) 0 clamp(2rem, 5vh, 3rem);
+}
+
+.back .keycap {
+	margin-right: 0.1em;
+}
+
+/* Arrival: a slow fade out of the dark, played once when the page opens. */
+@media (prefers-reduced-motion: no-preference) {
+	[data-enter] {
+		animation: arrive 1.1s var(--ease) both;
+		animation-delay: calc(var(--delay, 0) * 1ms);
+	}
+}
+
+@keyframes arrive {
+	from {
+		opacity: 0;
+		filter: blur(6px);
+	}
+
+	to {
+		opacity: 1;
+		filter: blur(0);
+	}
+}
+
+/* Moving between screens fades through black, where browsers support it. */
+@view-transition {
+	navigation: auto;
+}
+
+::view-transition-old(root) {
+	animation: 0.26s ease-in both fade-out;
+}
+
+::view-transition-new(root) {
+	animation: 0.42s ease-out 0.12s both fade-in;
+}
+
+@keyframes fade-out {
+	to {
+		opacity: 0;
+	}
+}
+
+@keyframes fade-in {
+	from {
+		opacity: 0;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	@view-transition {
+		navigation: none;
+	}
+}

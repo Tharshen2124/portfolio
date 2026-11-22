@@ -1,0 +1,18 @@
+---
+/** Back to the screen this one was opened from, as the game's menus end. */
+import MenuLink from './MenuLink.astro';
+
+interface Props {
+	href: string;
+	/** Where it leads, for screen readers and the tooltip. */
+	to: string;
+}
+
+const { href, to } = Astro.props;
+---
+
+<nav class="back" aria-label="Back">
+	<MenuLink href={href} item={false} title={`Back to ${to}`}>
+		<span class="keycap" aria-hidden="true">Esc</span> Back<span class="visually-hidden"> to {to}</span>
+	</MenuLink>
+</nav>

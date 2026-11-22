@@ -1,0 +1,30 @@
+---
+/**
+ * The original, plain design of the site, served under /original for anyone
+ * who wants just the information (recruiters, mostly).
+ */
+import { Font } from 'astro:assets';
+import SiteHead, { type SeoProps } from '../components/SiteHead.astro';
+import Nav from '../components/original/Nav.astro';
+import Footer from '../components/original/Footer.astro';
+import '../styles/original.css';
+
+type Props = SeoProps;
+---
+
+<!doctype html>
+<html lang="en">
+	<head>
+		<SiteHead {...Astro.props} themeColor={{ light: '#ffffff', dark: '#000000' }} />
+		<Font cssVariable="--font-sans" preload />
+	</head>
+	<body>
+		<div class="container">
+			<Nav />
+			<main>
+				<slot />
+			</main>
+			<Footer />
+		</div>
+	</body>
+</html>
