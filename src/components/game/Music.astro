@@ -1,7 +1,7 @@
 ---
 /**
- * Background music for the game design, with its toggle at the top of every
- * screen. It starts as soon as the browser allows, loops, and remembers being
+ * Background music for the game design, with its toggle in the bottom-right
+ * corner of every screen, out of the way of the content. It starts as soon as the browser allows, loops, and remembers being
  * switched off (localStorage).
  *
  * The audio element and its toggle are kept across page changes by the
@@ -16,7 +16,7 @@
  */
 ---
 
-<button type="button" class="music" aria-pressed="true" title="Music" transition:persist="music-toggle">
+<button type="button" class="music" aria-pressed="true" aria-label="Music" title="Music" transition:persist="music-toggle">
 	<span class="bars" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
 	<span class="music-label">Music</span>
 </button>
@@ -192,13 +192,16 @@
 
 <style>
 	.music {
-		position: absolute;
-		top: clamp(0.75rem, 2.2vw, 1.6rem);
-		left: 50%;
+		/* Pinned to the corner, so it's in reach however far down a screen goes. */
+		position: fixed;
+		right: calc(var(--gutter) - 0.4rem);
+		bottom: clamp(0.5rem, 2vw, 1.4rem);
 		z-index: 2;
 		display: inline-flex;
 		align-items: center;
+		justify-content: flex-end;
 		gap: 0.55rem;
+		min-width: 44px;
 		min-height: 44px;
 		padding: 0 0.4rem;
 		border: 0;
@@ -209,7 +212,6 @@
 		font-size: clamp(0.85rem, 0.8rem + 0.25vw, 1rem);
 		letter-spacing: 0.1em;
 		cursor: pointer;
-		translate: -50% 0;
 		transition:
 			color 0.2s,
 			text-shadow 0.2s;
@@ -283,6 +285,21 @@
 		50% {
 			opacity: 0.3;
 		}
+	}
+
+	/* Just the bars until it's hovered or focused, then the word glows in beside them. */
+	.music-label {
+		position: absolute;
+		right: 100%;
+		white-space: nowrap;
+		pointer-events: none;
+		opacity: 0;
+		transition: opacity 0.25s;
+	}
+
+	.music:hover .music-label,
+	.music:focus-visible .music-label {
+		opacity: 1;
 	}
 
 	.music[aria-pressed='false'] .music-label {
