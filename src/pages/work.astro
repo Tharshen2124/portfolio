@@ -43,7 +43,7 @@ const description =
 							<span class="slot-number" aria-hidden="true">
 								{i + 1}.
 							</span>
-							<div class="slot-band">
+							<div class="slot-body">
 								<div class="slot-main">
 									<h2 class="slot-org">
 										<a class="slot-link" href={slot.href}>
@@ -67,7 +67,7 @@ const description =
 				<li class="slot slot-new" data-item>
 					<Ornament name="hook" class="slot-hook" />
 					<span class="slot-number" aria-hidden="true">{slots.length + 1}.</span>
-					<div class="slot-band">
+					<div class="slot-body">
 						<div class="slot-main">
 							<h2 class="slot-org">
 								<a class="slot-link" href={site.links.linkedin} target="_blank" rel="noopener noreferrer" data-posthog-social-profile="linkedin">
@@ -147,40 +147,47 @@ const description =
 		text-shadow: var(--glow-text);
 	}
 
-	.slot-band {
+	.slot-body {
 		position: relative;
-		isolation: isolate;
 		display: flex;
 		gap: 1rem 2rem;
 		justify-content: space-between;
 		margin-left: clamp(0.75rem, 2vw, 1.5rem);
 		padding: clamp(0.85rem, 2vh, 1.25rem) clamp(1rem, 2.5vw, 1.75rem);
-		border-radius: 3px;
+	}
+
+	/* The chosen slot's words glow: the one under the cursor, or reached with the arrow keys. */
+	.slot-number,
+	.slot-org,
+	.slot-role,
+	.slot-summary,
+	.slot-skills,
+	.slot-place,
+	.slot-when {
 		transition:
-			background-color 0.3s,
-			box-shadow 0.3s;
+			color 0.3s var(--ease),
+			text-shadow 0.3s var(--ease);
 	}
 
-	/* The chosen slot lights up in the deep blue of a save file. */
-	.slot-band::before {
-		content: '';
-		position: absolute;
-		inset: 0;
-		z-index: -1;
-		border-radius: inherit;
-		background:
-			radial-gradient(ellipse 50% 120% at 85% 50%, rgba(140, 165, 255, 0.28), transparent 70%),
-			linear-gradient(to right, var(--band-a), var(--band-b) 75%, rgba(46, 72, 162, 0.35));
-		box-shadow:
-			0 0 0 1px rgba(174, 191, 255, 0.18) inset,
-			0 0 28px rgba(80, 110, 220, 0.28);
-		opacity: 0;
-		transition: opacity 0.35s var(--ease);
+	.slot[data-selected] :is(.slot-number, .slot-org, .slot-place) {
+		color: #fff;
+		text-shadow: var(--glow-lit);
 	}
 
-	.slot[data-selected] .slot-band::before,
-	.slot:hover .slot-band::before {
-		opacity: 1;
+	.slot[data-selected] :is(.slot-role, .slot-summary, .slot-skills, .slot-when) {
+		text-shadow: var(--glow-text);
+	}
+
+	.slot[data-selected] .slot-role {
+		color: #fff;
+	}
+
+	.slot[data-selected] :is(.slot-summary, .slot-when) {
+		color: var(--pale);
+	}
+
+	.slot[data-selected] .slot-skills {
+		color: var(--soft);
 	}
 
 	.slot-main {
@@ -284,7 +291,7 @@ const description =
 		right: calc(var(--hook) * -0.95);
 	}
 
-	/* The pointers sit outside the list; without room for them the band alone shows the choice. */
+	/* The pointers sit outside the list; without room for them the glow alone shows the choice. */
 	@media (max-width: 1040px) {
 		.slot > :global(.pointer) {
 			display: none;
@@ -292,7 +299,7 @@ const description =
 	}
 
 	@media (max-width: 760px) {
-		.slot-band {
+		.slot-body {
 			flex-direction: column;
 			margin-left: 0.5rem;
 		}

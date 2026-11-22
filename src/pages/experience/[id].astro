@@ -397,11 +397,14 @@ const meta = [formatRange(startDate, endDate), location].filter(Boolean).join(' 
 		min-height: 44px;
 		color: var(--soft);
 		text-decoration: none;
-		transition: color 0.2s;
+		transition:
+			color 0.2s,
+			text-shadow 0.2s;
 	}
 
 	.record-step:hover {
 		color: #fff;
+		text-shadow: var(--glow-lit);
 	}
 
 	.step-older {
