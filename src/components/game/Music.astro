@@ -9,10 +9,10 @@
  * has no router, so going there is a full page load and the music stops; the
  * track position is saved (sessionStorage) and picked up again on return.
  *
- * Browsers only allow sound after a click, tap or key press on the site. When
- * one is holding the music back on arrival, a "press any key" screen asks for
- * that press, as a game's start screen would, and the music starts with it.
- * Browsers that already allow sound (a returning visitor, say) skip it.
+ * Browsers only allow sound after a click, tap or key press on the site. The
+ * start screen (StartScreen.astro) covers the page on arrival while the music
+ * tries to start: if the browser holds it back, the screen asks for a key
+ * press, and the music starts with it; if not, the screen clears away.
  */
 ---
 
@@ -20,15 +20,13 @@
 	<span class="bars" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
 	<span class="music-label">Music</span>
 </button>
-<button type="button" class="gate" hidden aria-label="Begin, with music">
-	<span class="gate-prompt"><span class="gate-keys">Press any key</span><span class="gate-tap">Tap anywhere</span> to begin</span>
-</button>
 <audio class="soundtrack" src="/audio/medieval-background.m4a" loop preload="none" transition:persist="soundtrack"></audio>
 
 <script>
 	const PREF = 'game-music';
 	const POSITION = 'game-music-position';
 	const VOLUME = 0.2;
+	const START_VOLUME = 0.01;
 
 	const audio = document.querySelector<HTMLAudioElement>('audio.soundtrack')!;
 	const toggle = document.querySelector<HTMLButtonElement>('button.music')!;
@@ -83,23 +81,45 @@
 			const at = Number(read(() => sessionStorage, POSITION));
 			if (at > 0) audio.currentTime = at;
 		}
-		audio.volume = 0;
+		// Fade in from just above silence, not from 0. Firefox and Safari let
+		// silent (volume 0) playback start without a press, then pause it the
+		// moment the fade makes it audible, so play() never says it was blocked
+		// and the start screen never shows. Any volume above 0 counts as sound
+		// to them, so they refuse here as Chrome does.
+		audio.volume = START_VOLUME;
 		audio
 			.play()
 			.then(() => fadeTo(VOLUME, 2))
 			.catch((error: DOMException) => {
 				// Blocked until the visitor clicks or presses a key: ask for one.
+				// Anything else (the track failing to load) has no press to ask for.
 				if (error.name === 'NotAllowedError') openGate();
+				else liftGate();
 			});
 	};
 
-	// The start screen, shown once per page load at most.
+	// The start screen, shown once per page load at most. It's up before this
+	// runs, as a plain cover until the browser answers.
 	let gated = false;
+	const fadeOut = (el: HTMLElement) => {
+		el.classList.add('gate-leaving');
+		el.addEventListener('animationend', () => (el.hidden = true), { once: true });
+		// No animation to wait for when motion is reduced.
+		if (matchMedia('(prefers-reduced-motion: reduce)').matches) el.hidden = true;
+	};
+	// The browser let the music play, so there's no press to ask for.
+	const liftGate = () => {
+		const el = gate();
+		if (gated || !el || el.hidden) return;
+		gated = true;
+		fadeOut(el);
+	};
 	const openGate = () => {
 		const el = gate();
 		if (gated || !el) return;
 		gated = true;
 		el.hidden = false;
+		el.classList.add('gate-open');
 		el.focus({ preventScroll: true });
 		// Runs before every other listener, so the press that opens the site
 		// doesn't also follow a link or a menu item.
@@ -118,10 +138,7 @@
 		const closeGate = (el: HTMLElement) => {
 			window.removeEventListener('keydown', begin, true);
 			el.removeEventListener('click', begin);
-			el.classList.add('gate-leaving');
-			el.addEventListener('animationend', () => (el.hidden = true), { once: true });
-			// No animation to wait for when motion is reduced.
-			if (matchMedia('(prefers-reduced-motion: reduce)').matches) el.hidden = true;
+			fadeOut(el);
 			show();
 		};
 		window.addEventListener('keydown', begin, true);
@@ -149,6 +166,9 @@
 		document.addEventListener(type, resume, { capture: true, passive: true });
 	}
 
+	// 'play' comes as soon as the browser agrees to play, before the track has
+	// loaded, so the cover doesn't wait on the network.
+	audio.addEventListener('play', liftGate);
 	audio.addEventListener('play', show);
 	audio.addEventListener('pause', show);
 
@@ -254,78 +274,6 @@
 		}
 	}
 
-	/* The start screen, over the scene while the browser holds the music back. */
-	.gate {
-		position: fixed;
-		inset: 0;
-		z-index: 200;
-		display: grid;
-		place-items: center;
-		width: 100%;
-		padding: var(--gutter);
-		border: 0;
-		background: radial-gradient(ellipse at center, rgba(3, 4, 6, 0.9), rgba(3, 4, 6, 0.97) 70%);
-		backdrop-filter: blur(10px);
-		color: var(--pale);
-		font-family: var(--font-carved);
-		font-weight: 500;
-		font-size: clamp(1.05rem, 0.85rem + 1vw, 1.6rem);
-		letter-spacing: 0.22em;
-		text-align: center;
-		cursor: pointer;
-		animation: gate-in 0.6s var(--ease) both;
-	}
-
-	.gate[hidden] {
-		display: none;
-	}
-
-	.gate:focus {
-		outline: none;
-	}
-
-	.gate-prompt {
-		text-shadow: var(--glow-text);
-		animation: gate-breathe 2.6s ease-in-out infinite;
-	}
-
-	.gate-tap {
-		display: none;
-	}
-
-	@media (hover: none) and (pointer: coarse) {
-		.gate-keys {
-			display: none;
-		}
-
-		.gate-tap {
-			display: inline;
-		}
-	}
-
-	.gate-leaving {
-		animation: gate-out 0.7s var(--ease) both;
-		pointer-events: none;
-	}
-
-	@keyframes gate-in {
-		from {
-			opacity: 0;
-		}
-	}
-
-	@keyframes gate-out {
-		to {
-			opacity: 0;
-		}
-	}
-
-	@keyframes gate-breathe {
-		50% {
-			opacity: 0.45;
-		}
-	}
-
 	/* On, but the browser is holding the music until the first click or key. */
 	.music.waiting .bars {
 		animation: waiting 1.6s ease-in-out infinite;
@@ -344,9 +292,7 @@
 
 	@media (prefers-reduced-motion: reduce) {
 		.music.playing .bars i,
-		.music.waiting .bars,
-		.gate,
-		.gate-prompt {
+		.music.waiting .bars {
 			animation: none;
 		}
 	}
