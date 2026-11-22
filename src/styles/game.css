@@ -50,6 +50,13 @@ a {
 	color: inherit;
 }
 
+/* Italics use Alegreya's: Garamond's is too fine to read at small sizes in the dark. */
+em,
+i,
+cite {
+	font-family: var(--font-italic);
+}
+
 ::selection {
 	background: rgba(174, 191, 255, 0.35);
 	color: #fff;

@@ -30,6 +30,7 @@ const { scene = 'cavern', back, withEmblems = false, ...seo } = Astro.props;
 		<SiteHead {...seo} themeColor="#030406" />
 		<Font cssVariable="--font-carved" preload />
 		<Font cssVariable="--font-book" preload={[{ style: 'normal' }]} />
+		<Font cssVariable="--font-italic" />
 		{/* Screens change without a full page load, so the music plays straight through. */}
 		<ClientRouter />
 	</head>
