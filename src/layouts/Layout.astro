@@ -1,10 +1,7 @@
 ---
 import { Font } from 'astro:assets';
-import { ClientRouter } from 'astro:transitions';
 import Nav from '../components/Nav.astro';
 import Footer from '../components/Footer.astro';
-import Space from '../components/Space.astro';
-import Gate from '../components/Gate.astro';
 import PostHog from '../components/posthog.astro';
 import { site } from '../data/site';
 import { absoluteUrl, defaultImage, pagePath, type JsonLd } from '../lib/seo';
@@ -19,8 +16,6 @@ interface Props {
 	/** Markdown copy of this page, advertised to agents via rel="alternate". */
 	markdownUrl?: string;
 	jsonLd?: JsonLd;
-	/** Skip the reading column so the page can lay itself out edge to edge. */
-	fullBleed?: boolean;
 }
 
 const {
@@ -30,7 +25,6 @@ const {
 	noindex = false,
 	markdownUrl,
 	jsonLd,
-	fullBleed = false,
 } = Astro.props;
 const pageTitle = title ? `${title} | ${site.title}` : site.title;
 const canonicalURL = absoluteUrl(pagePath(Astro.url));
@@ -52,31 +46,8 @@ const image = await defaultImage();
 		<meta name="author" content={site.name} />
 		{noindex && <meta name="robots" content="noindex" />}
 		<link rel="canonical" href={canonicalURL} />
-		<meta name="theme-color" content="#05070d" />
-		<script is:inline>
-			// Apply the reader's chosen mode before first paint: "plain" (the original
-			// minimal site), "map" (the star map), or "ask" when they haven't chosen.
-			(() => {
-				let mode;
-				try {
-					mode = localStorage.getItem('site-mode');
-				} catch {}
-				document.documentElement.dataset.mode = mode === 'plain' || mode === 'map' ? mode : 'ask';
-				if (mode === 'plain') {
-					const dark = matchMedia('(prefers-color-scheme: dark)').matches;
-					document.querySelector('meta[name="theme-color"]').content = dark ? '#000000' : '#ffffff';
-				}
-
-				// Page changes swap in a new <html> and <head> without re-running this
-				// script, so carry the mode and theme colour over to the incoming page.
-				document.addEventListener('astro:before-swap', ({ newDocument }) => {
-					newDocument.documentElement.dataset.mode = document.documentElement.dataset.mode;
-					const color = document.querySelector('meta[name="theme-color"]').content;
-					newDocument.querySelector('meta[name="theme-color"]').content = color;
-				});
-			})();
-		</script>
-		<ClientRouter />
+		<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
+		<meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)" />
 
 		<meta property="og:title" content={pageTitle} />
 		<meta property="og:description" content={description} />
@@ -106,17 +77,15 @@ const image = await defaultImage();
 		{markdownUrl && <link rel="alternate" type="text/markdown" href={markdownUrl} />}
 		{jsonLd && <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />}
 		<Font cssVariable="--font-sans" preload />
-		<Font cssVariable="--font-display" preload />
-		<Font cssVariable="--font-title" />
 		<PostHog />
 	</head>
 	<body>
-		<Space dim={!fullBleed} />
-		<Nav />
-		<main class={fullBleed ? undefined : 'container'}>
-			<slot />
-		</main>
-		<Footer />
-		<Gate />
+		<div class="container">
+			<Nav />
+			<main>
+				<slot />
+			</main>
+			<Footer />
+		</div>
 	</body>
 </html>

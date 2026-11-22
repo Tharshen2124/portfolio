@@ -45,7 +45,7 @@ const { stack } = Astro.props;
 		gap: 0.4rem;
 		padding: 0.25rem 0.6rem;
 		border: 1px solid var(--border);
-		border-radius: 2px;
+		border-radius: 0.5rem;
 		background: var(--code-bg);
 		color: var(--muted);
 		font-size: 0.8125rem;
@@ -57,9 +57,5 @@ const { stack } = Astro.props;
 		width: 0.95rem;
 		height: 0.95rem;
 		fill: currentColor;
-	}
-
-	:global(html[data-mode='plain']) li {
-		border-radius: 0.5rem;
 	}
 </style>

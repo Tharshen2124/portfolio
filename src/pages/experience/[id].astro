@@ -92,3 +92,13 @@ const jsonLd = graph(
 		</footer>
 	</article>
 </Layout>
+
+<script is:inline>
+	document.querySelectorAll('[data-posthog-experience-resource]').forEach((link) => {
+		link.addEventListener('click', () => {
+			window.posthog?.capture('experience_resource_opened', {
+				link_location: 'article_footer',
+			});
+		});
+	});
+</script>

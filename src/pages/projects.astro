@@ -52,8 +52,8 @@ const jsonLd = graph(
 
 	<ul class="projects">
 		{
-			projects.map(({ id, data }) => (
-				<li id={id}>
+			projects.map(({ data }) => (
+				<li>
 					<h2 class="project-name">
 						<a
 							href={data.repo}
@@ -99,6 +99,30 @@ const jsonLd = graph(
 	</ul>
 </Layout>
 
+<script is:inline>
+	document.querySelectorAll('[data-posthog-project-repository]').forEach((link) => {
+		link.addEventListener('click', () => {
+			window.posthog?.capture('project_repository_opened', {
+				project_name: link.dataset.posthogProjectRepository,
+			});
+			window.posthog?.logger?.info('portfolio project repository opened', {
+				project_name: link.dataset.posthogProjectRepository,
+			});
+		});
+	});
+
+	document.querySelectorAll('[data-posthog-project-live-site]').forEach((link) => {
+		link.addEventListener('click', () => {
+			window.posthog?.capture('project_live_site_opened', {
+				project_name: link.dataset.posthogProjectLiveSite,
+			});
+			window.posthog?.logger?.info('portfolio project live site opened', {
+				project_name: link.dataset.posthogProjectLiveSite,
+			});
+		});
+	});
+</script>
+
 <style>
 	.projects {
 		list-style: none;
@@ -106,24 +130,13 @@ const jsonLd = graph(
 		padding: 0;
 	}
 
-	.projects > li {
-		padding: 1.5rem 0 1.5rem 1.25rem;
-		border-left: 1px solid var(--line);
-		transition: border-color 0.3s;
-	}
-
-	.projects > li:hover {
-		border-left-color: var(--border);
-	}
-
-	/* Arriving from a hexagon on the map. */
-	.projects > li:target {
-		border-left-color: var(--accent);
+	li + li {
+		margin-top: 2.25rem;
 	}
 
 	.project-name {
 		font-size: 1.1875rem;
-		letter-spacing: 0.01em;
+		letter-spacing: -0.01em;
 		margin: 0 0 0.5rem;
 	}
 
@@ -148,24 +161,5 @@ const jsonLd = graph(
 
 	.links .more-link {
 		margin-top: 0;
-	}
-
-	/* Plain mode: the original spacing, no rail. */
-	:global(html[data-mode='plain']) .projects > li {
-		padding: 0;
-		border: 0;
-	}
-
-	:global(html[data-mode='plain']) .projects > li + li {
-		margin-top: 2.25rem;
-	}
-
-	:global(html[data-mode='plain']) .project-name {
-		letter-spacing: -0.01em;
-	}
-
-	:global(html[data-mode='plain']) .project-name a:hover {
-		text-decoration: underline;
-		text-underline-offset: 3px;
 	}
 </style>

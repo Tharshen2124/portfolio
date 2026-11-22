@@ -76,6 +76,19 @@ const jsonLd = graph(
 		scrolling="no"></iframe>
 </Layout>
 
+<script is:inline>
+	document.querySelectorAll('[data-posthog-blog-link]').forEach((link) => {
+		link.addEventListener('click', () => {
+			window.posthog?.capture('blog_opened', {
+				link_location: link.dataset.posthogBlogLink,
+			});
+			window.posthog?.logger?.info('portfolio blog opened', {
+				link_location: link.dataset.posthogBlogLink,
+			});
+		});
+	});
+</script>
+
 <style>
 	.substack-embed {
 		display: block;
@@ -83,11 +96,7 @@ const jsonLd = graph(
 		max-width: 30rem;
 		height: 320px;
 		border: 1px solid var(--border);
-		border-radius: 2px;
-		background: #fff;
-	}
-
-	:global(html[data-mode='plain']) .substack-embed {
 		border-radius: 0.5rem;
+		background: #fff;
 	}
 </style>
