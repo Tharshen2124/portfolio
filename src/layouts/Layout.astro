@@ -56,10 +56,16 @@ const { scene = 'cavern', back, withEmblems = false, ...seo } = Astro.props;
 	const linkOf = (item: Element) =>
 		(item.matches('a') ? item : item.querySelector('a')) as HTMLAnchorElement | null;
 
+	// A screen's arrow-key menu runs on into the Back link at its foot.
+	const itemsOf = (menu: HTMLElement) => [
+		...menu.querySelectorAll<HTMLElement>('[data-item]'),
+		...(menu.hasAttribute('data-keys') ? document.querySelectorAll<HTMLElement>('.back [data-item]') : []),
+	];
+
 	// Each screen is swapped in by the ClientRouter, so its menus are set up on every page load.
 	document.addEventListener('astro:page-load', () => {
 		for (const menu of document.querySelectorAll<HTMLElement>('[data-menu]')) {
-			const items = [...menu.querySelectorAll<HTMLElement>('[data-item]')];
+			const items = itemsOf(menu);
 			const select = (item: HTMLElement) => {
 				if (item.hasAttribute('data-selected')) return;
 				for (const other of items) other.toggleAttribute('data-selected', other === item);
@@ -85,7 +91,7 @@ const { scene = 'cavern', back, withEmblems = false, ...seo } = Astro.props;
 		if (target.closest('input, textarea, select, [contenteditable]')) return;
 
 		const menu = target.closest<HTMLElement>('[data-menu]') ?? document.querySelector<HTMLElement>('[data-menu][data-keys]');
-		const items = menu ? [...menu.querySelectorAll<HTMLElement>('[data-item]')] : [];
+		const items = menu ? itemsOf(menu) : [];
 		const current = items.findIndex((item) => item.hasAttribute('data-selected'));
 
 		if ((event.key === 'ArrowDown' || event.key === 'ArrowUp') && items.length) {

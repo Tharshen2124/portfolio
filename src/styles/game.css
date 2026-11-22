@@ -320,10 +320,6 @@ cite {
 	padding: clamp(2rem, 6vh, 3.5rem) 0 clamp(2rem, 5vh, 3rem);
 }
 
-.back .keycap {
-	margin-right: 0.5em;
-}
-
 /* Arrival: a slow fade out of the dark, played once when the page opens. */
 @media (prefers-reduced-motion: no-preference) {
 	[data-enter] {

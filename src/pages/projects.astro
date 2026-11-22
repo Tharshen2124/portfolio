@@ -168,8 +168,10 @@ const { previous, next } = neighbours('/projects');
 		const show = (key: string | undefined) => {
 			for (const detail of details) detail.toggleAttribute('data-hidden', detail.dataset.detail !== key);
 		};
+		// Moving on to Back leaves the last project showing.
 		list.addEventListener('menuselect', (event) => {
-			show(((event as CustomEvent).detail as HTMLElement).dataset.key);
+			const key = ((event as CustomEvent).detail as HTMLElement).dataset.key;
+			if (key) show(key);
 		});
 		list.addEventListener('click', (event) => {
 			const link = (event.target as Element).closest('a');
