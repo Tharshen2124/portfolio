@@ -49,7 +49,10 @@ const socials = [
 			<ul class="menu" data-menu data-keys>
 				<li>
 					{/* A full page load: the original design has no music, so it stops here. */}
-					<MenuLink href={originalPath('/')} data-astro-reload>Original Site (For HRs)</MenuLink>
+					<MenuLink href={originalPath('/')} data-astro-reload>
+						<span class="menu-note">(For Recruiters)</span>
+						<span class="menu-main">Original Site</span>
+					</MenuLink>
 				</li>
 				{
 					sections.map(({ path, label }) => (
@@ -144,6 +147,18 @@ const socials = [
 
 	.main-menu {
 		width: 100%;
+	}
+
+	/* Who it's for, carved small above the item's name. */
+	.menu-note,
+	.menu-main {
+		display: block;
+	}
+
+	.menu-note {
+		margin-bottom: 0.15em;
+		font-size: 0.58em;
+		letter-spacing: 0.1em;
 	}
 
 	.corners {
