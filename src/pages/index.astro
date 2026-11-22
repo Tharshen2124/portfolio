@@ -18,11 +18,6 @@ const jsonLd = graph({
 });
 
 const [firstName, ...rest] = site.name.split(' ');
-const socials = [
-	{ href: site.links.github, label: 'GitHub', id: 'github' },
-	{ href: site.links.linkedin, label: 'LinkedIn', id: 'linkedin' },
-	{ href: site.links.substack, label: 'Substack', id: 'substack' },
-];
 ---
 
 <Layout description={description} type="profile" jsonLd={jsonLd} scene="title">
@@ -49,7 +44,10 @@ const socials = [
 			<ul class="menu" data-menu data-keys>
 				<li>
 					{/* A full page load: the original design has no music, so it stops here. */}
-					<MenuLink href={originalPath('/')} data-astro-reload>Original Site (For HRs)</MenuLink>
+					<MenuLink href={originalPath('/')} data-astro-reload>
+						<span class="menu-note">(For Recruiters)</span>
+						<span class="menu-main">Original Site</span>
+					</MenuLink>
 				</li>
 				{
 					sections.map(({ path, label }) => (
@@ -60,22 +58,6 @@ const socials = [
 				}
 			</ul>
 		</nav>
-
-		<footer class="corners" data-enter style="--delay: 1100">
-			<p class="tagline">DevOps · SRE · Observability</p>
-			<ul class="socials">
-				{
-					socials.map(({ href, label, id }) => (
-						<li>
-							<a href={href} target="_blank" rel="noopener noreferrer" data-posthog-social-profile={id}>
-								{label}
-								<span aria-hidden="true">↗</span>
-							</a>
-						</li>
-					))
-				}
-			</ul>
-		</footer>
 	</main>
 </Layout>
 
@@ -88,7 +70,7 @@ const socials = [
 		gap: clamp(2rem, 7vh, 4.5rem);
 		min-height: 100vh;
 		min-height: 100dvh;
-		padding: clamp(3rem, 9vh, 6rem) var(--gutter) clamp(6rem, 14vh, 8rem);
+		padding: clamp(3rem, 9vh, 6rem) var(--gutter);
 	}
 
 	.crest {
@@ -146,47 +128,16 @@ const socials = [
 		width: 100%;
 	}
 
-	.corners {
-		position: absolute;
-		inset: auto 0 0;
-		display: flex;
-		flex-wrap: wrap;
-		align-items: flex-end;
-		justify-content: space-between;
-		gap: 0.5rem 1.5rem;
-		padding: 0 var(--gutter) clamp(1rem, 3vh, 2rem);
-		color: var(--dim);
-		font-size: 1rem;
+	/* Who it's for, carved small above the item's name. */
+	.menu-note,
+	.menu-main {
+		display: block;
 	}
 
-	.tagline {
-		margin: 0;
-		letter-spacing: 0.04em;
-	}
-
-	.socials {
-		display: flex;
-		gap: 0.25rem 1.25rem;
-		margin: 0;
-		padding: 0;
-		list-style: none;
-	}
-
-	.socials a {
-		display: inline-flex;
-		align-items: center;
-		gap: 0.3em;
-		min-height: 44px;
-		color: var(--soft);
-		text-decoration: none;
-		transition:
-			color 0.2s,
-			text-shadow 0.2s;
-	}
-
-	.socials a:hover {
-		color: #fff;
-		text-shadow: var(--glow-lit);
+	.menu-note {
+		margin-bottom: 0.15em;
+		font-size: 0.58em;
+		letter-spacing: 0.1em;
 	}
 
 	:global(html[data-revisit]) [data-enter] {
@@ -194,21 +145,9 @@ const socials = [
 		animation-delay: 0s;
 	}
 
-	@media (max-width: 640px) {
-		.corners {
-			flex-direction: column;
-			align-items: center;
-			text-align: center;
-		}
-	}
-
 	@media (max-height: 560px) {
 		.title {
 			justify-content: flex-start;
-		}
-
-		.corners {
-			position: static;
 		}
 	}
 </style>

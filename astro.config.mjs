@@ -54,5 +54,16 @@ export default defineConfig({
 			subsets: ['latin'],
 			fallbacks: ['Georgia', 'serif'],
 		},
+		{
+			// The game design's italics: a calligraphic hand that stays easy to read
+			// at small sizes, unlike Garamond's italic.
+			provider: fontProviders.fontsource(),
+			name: 'Alegreya',
+			cssVariable: '--font-italic',
+			weights: ['400 700'],
+			styles: ['italic'],
+			subsets: ['latin'],
+			fallbacks: ['Georgia', 'serif'],
+		},
 	],
 });

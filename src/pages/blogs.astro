@@ -1,0 +1,217 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Back from '../components/game/Back.astro';
+import MenuLink from '../components/game/MenuLink.astro';
+import Ornament from '../components/game/Ornament.astro';
+import ScreenTitle from '../components/game/ScreenTitle.astro';
+import Tabs from '../components/game/Tabs.astro';
+import { site } from '../data/site';
+import { formatDay } from '../lib/format';
+import { absoluteUrl, breadcrumbSchema, graph, personId, personSchema } from '../lib/seo';
+import { getSubstackFeed } from '../lib/substack';
+
+const { description: blurb, posts } = await getSubstackFeed();
+
+/** Substack's descriptions can run long; the list shows a line or two. */
+const excerpt = (text?: string) => text?.replace(/<[^>]+>/g, '').trim();
+
+const description = "Tharshen's writing on Site Reliability Engineering, Observability and DevOps, published on Substack.";
+const jsonLd = graph(
+	{
+		'@type': 'Blog',
+		url: absoluteUrl('/blogs'),
+		name: 'Blogs',
+		description,
+		author: { '@id': personId },
+		blogPost: posts.map((post) => ({
+			'@type': 'BlogPosting',
+			headline: post.title,
+			url: post.url,
+			datePublished: post.date.toISOString(),
+			author: { '@id': personId },
+		})),
+	},
+	personSchema(),
+	breadcrumbSchema([
+		{ name: 'Home', path: '/' },
+		{ name: 'Blogs', path: '/blogs' },
+	]),
+);
+---
+
+<Layout title="Blogs" description={description} jsonLd={jsonLd} back="/">
+	<div class="screen">
+		<Tabs current="/blogs" />
+		<main id="main" class="blogs">
+			<ScreenTitle>Blogs</ScreenTitle>
+
+			{blurb && <p class="blurb" data-enter style="--delay: 300">{blurb.replace(/\.?$/, '.')}</p>}
+
+			{
+				posts.length > 0 && (
+					<ol class="posts" data-menu data-keys data-enter style="--delay: 350">
+						{posts.map((post) => (
+							<li class="post" data-item>
+								<h2 class="post-title">
+									<a class="post-link" href={post.url} target="_blank" rel="noopener noreferrer" data-posthog-blog-link="post_list">
+										{post.title}
+									</a>
+								</h2>
+								<p class="post-date">
+									<time datetime={post.date.toISOString()}>{formatDay(post.date)}</time>
+								</p>
+								{excerpt(post.description) && <p class="post-summary">{excerpt(post.description)}</p>}
+								<Ornament name="pointer" class="pointer" />
+								<Ornament name="pointer" class="pointer pointer-end" />
+							</li>
+						))}
+					</ol>
+				)
+			}
+
+			<div class="more" data-enter style="--delay: 450">
+				<MenuLink
+					href={site.substackUrl}
+					target="_blank"
+					rel="noopener noreferrer"
+					item={posts.length === 0}
+					data-posthog-blog-link="substack_more"
+				>
+					{posts.length > 0 ? 'More on Substack' : 'Read on Substack'}&nbsp;<span aria-hidden="true">↗</span>
+				</MenuLink>
+			</div>
+
+			<Back href="/" to="the title menu" />
+		</main>
+	</div>
+</Layout>
+
+<style>
+	.blogs {
+		padding-top: clamp(0.5rem, 3vh, 2rem);
+	}
+
+	.blurb {
+		width: min(100% - 2 * var(--gutter), 40rem);
+		margin: clamp(1.25rem, 3.5vh, 2rem) auto 0;
+		font-family: var(--font-italic);
+		font-style: italic;
+		font-size: 1.12rem;
+		text-align: center;
+		color: var(--soft);
+		text-wrap: balance;
+	}
+
+	.posts {
+		display: grid;
+		gap: clamp(1.6rem, 4vh, 2.4rem);
+		width: min(100% - 2 * var(--gutter), 44rem);
+		margin: clamp(2rem, 6vh, 3.25rem) auto 0;
+		padding: 0;
+		list-style: none;
+	}
+
+	.post {
+		position: relative;
+		text-align: center;
+	}
+
+	.post-title {
+		margin: 0;
+		font-family: var(--font-carved);
+		font-weight: 500;
+		font-size: clamp(1.2rem, 1rem + 0.7vw, 1.55rem);
+		line-height: 1.3;
+		letter-spacing: 0.04em;
+		color: var(--cream);
+		text-shadow: var(--glow-text);
+		text-wrap: balance;
+	}
+
+	.post-link {
+		text-decoration: none;
+	}
+
+	/* The whole entry opens the post. */
+	.post-link::after {
+		content: '';
+		position: absolute;
+		inset: -0.5rem -0.75rem;
+	}
+
+	/* Focusing a post selects it, so its glow marks it; no box. */
+	.post-link:focus-visible {
+		outline: none;
+	}
+
+	.post-date {
+		margin: 0.35rem 0 0;
+		font-family: var(--font-italic);
+		font-style: italic;
+		font-size: 1.05rem;
+		color: var(--dim);
+	}
+
+	.post-summary {
+		margin: 0.5rem auto 0;
+		max-width: 36rem;
+		font-size: 1.08rem;
+		line-height: 1.5;
+		color: var(--soft);
+		text-wrap: pretty;
+	}
+
+	.post-title,
+	.post-date,
+	.post-summary {
+		transition:
+			color 0.3s var(--ease),
+			text-shadow 0.3s var(--ease);
+	}
+
+	.post[data-selected] .post-title {
+		color: #fff;
+		text-shadow:
+			var(--glow-lit),
+			0 0 32px rgba(174, 191, 255, 0.3);
+	}
+
+	.post[data-selected] .post-date {
+		color: var(--soft);
+	}
+
+	.post[data-selected] .post-summary {
+		color: var(--pale);
+		text-shadow: var(--glow-text);
+	}
+
+	/* The pointers close in either side of the chosen post's title. */
+	.post > :global(.pointer) {
+		position: absolute;
+		top: 0.15rem;
+		left: -3.25rem;
+		width: clamp(1.9rem, 1.5rem + 1vw, 2.6rem);
+		color: var(--pale);
+	}
+
+	.post > :global(.pointer-end) {
+		left: auto;
+		right: -3.25rem;
+	}
+
+	@media (max-width: 900px) {
+		.post > :global(.pointer) {
+			display: none;
+		}
+	}
+
+	.more {
+		display: flex;
+		justify-content: center;
+		margin-top: clamp(1.75rem, 5vh, 3rem);
+	}
+
+	.more :global(.menu-item) {
+		font-size: clamp(1rem, 0.9rem + 0.4vw, 1.25rem);
+	}
+</style>
