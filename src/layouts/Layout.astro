@@ -126,6 +126,14 @@ const { scene = 'cavern', back, withEmblems = false, ...seo } = Astro.props;
 				posthog()?.logger?.info('portfolio project live site opened', props);
 			},
 		],
+		[
+			'[data-posthog-blog-link]',
+			(el) => {
+				const props = { link_location: el.dataset.posthogBlogLink };
+				posthog()?.capture('blog_opened', props);
+				posthog()?.logger?.info('portfolio blog opened', props);
+			},
+		],
 		['[data-posthog-experience-resource]', () => posthog()?.capture('experience_resource_opened', { link_location: 'article_footer' })],
 	];
 	document.addEventListener('click', (event) => {

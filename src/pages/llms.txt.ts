@@ -48,11 +48,15 @@ export const GET: APIRoute = async () => {
 		`- [Work experience](${absoluteUrl('/work')})`,
 		`- [Volunteer experience](${absoluteUrl('/volunteer')})`,
 		`- [Projects](${absoluteUrl('/projects')})`,
+		`- [Blogs](${absoluteUrl('/blogs')})`,
+		`- [Socials](${absoluteUrl('/socials')})`,
 		`- [Plain version of the site](${absoluteUrl(originalPath('/'))})`,
 		`- [Blog](${absoluteUrl(originalPath('/blog'))})`,
 		`- [GitHub](${site.links.github})`,
 		`- [LinkedIn](${site.links.linkedin})`,
 		`- [Substack](${site.links.substack})`,
+		`- [X](${site.links.x})`,
+		`- [RedNote](${site.links.rednote})`,
 		'',
 	].join('\n');
 

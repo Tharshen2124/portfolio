@@ -3,6 +3,8 @@ export const sections = [
 	{ path: '/work', label: 'Work Experience', short: 'Work' },
 	{ path: '/volunteer', label: 'Volunteer Experience', short: 'Volunteer' },
 	{ path: '/projects', label: 'Projects', short: 'Projects' },
+	{ path: '/blogs', label: 'Blogs', short: 'Blogs' },
+	{ path: '/socials', label: 'Socials', short: 'Socials' },
 ] as const;
 
 export type SectionPath = (typeof sections)[number]['path'];

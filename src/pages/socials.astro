@@ -1,0 +1,93 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Back from '../components/game/Back.astro';
+import MenuLink from '../components/game/MenuLink.astro';
+import ScreenTitle from '../components/game/ScreenTitle.astro';
+import Tabs from '../components/game/Tabs.astro';
+import { site } from '../data/site';
+import { absoluteUrl, breadcrumbSchema, graph, personSchema } from '../lib/seo';
+
+/** Where to find me, each carved like a menu item with its handle beneath. */
+const socials = [
+	{ id: 'github', name: 'GitHub', handle: 'Tharshen2124', href: site.links.github },
+	{ id: 'linkedin', name: 'LinkedIn', handle: 'in/tharshen', href: site.links.linkedin },
+	{ id: 'x', name: 'X', handle: '@Tmanistoopro', href: site.links.x },
+	{ id: 'rednote', name: 'RedNote', handle: 'Xiaohongshu', href: site.links.rednote },
+];
+
+const description = 'Where to find Tharshen online: GitHub, LinkedIn, X and RedNote.';
+const jsonLd = graph(
+	{
+		'@type': 'ProfilePage',
+		url: absoluteUrl('/socials'),
+		name: 'Socials',
+		description,
+	},
+	personSchema(),
+	breadcrumbSchema([
+		{ name: 'Home', path: '/' },
+		{ name: 'Socials', path: '/socials' },
+	]),
+);
+---
+
+<Layout title="Socials" description={description} jsonLd={jsonLd} back="/">
+	<div class="screen">
+		<Tabs current="/socials" />
+		<main id="main" class="socials">
+			<ScreenTitle>Socials</ScreenTitle>
+
+			<ul class="menu social-menu" data-menu data-keys data-enter style="--delay: 350">
+				{
+					socials.map(({ id, name, handle, href }) => (
+						<li>
+							<MenuLink href={href} target="_blank" rel="noopener noreferrer" data-posthog-social-profile={id}>
+								<span class="social-name">{name}</span>
+								<span class="social-handle">
+									{handle}&nbsp;<span aria-hidden="true">↗</span>
+								</span>
+							</MenuLink>
+						</li>
+					))
+				}
+			</ul>
+
+			<Back href="/" to="the title menu" />
+		</main>
+	</div>
+</Layout>
+
+<style>
+	.socials {
+		display: flex;
+		flex-direction: column;
+		min-height: calc(100dvh - 5rem);
+		padding-top: clamp(0.5rem, 3vh, 2rem);
+	}
+
+	.social-menu {
+		gap: clamp(0.6rem, 2.2vh, 1.3rem);
+		margin: clamp(2.5rem, 8vh, 5rem) auto 0;
+	}
+
+	.social-name,
+	.social-handle {
+		display: block;
+	}
+
+	/* The handle, set small in the book face's italic beneath the carved name. */
+	.social-handle {
+		margin-top: 0.2em;
+		font-family: var(--font-italic);
+		font-style: italic;
+		font-size: 0.62em;
+		letter-spacing: 0.02em;
+		color: var(--dim);
+		transition: color 0.2s;
+	}
+
+	:global([data-selected]) .social-handle,
+	:global(.menu-item:hover) .social-handle {
+		color: var(--soft);
+	}
+</style>

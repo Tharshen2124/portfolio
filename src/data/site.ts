@@ -19,5 +19,7 @@ export const site = {
 		github: 'https://github.com/Tharshen2124',
 		linkedin: 'https://www.linkedin.com/in/tharshen/',
 		substack: 'https://tharshen.substack.com',
+		x: 'https://x.com/Tmanistoopro',
+		rednote: 'http://xhslink.com/m/uJVw3bxUmu',
 	},
 };
