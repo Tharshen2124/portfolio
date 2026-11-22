@@ -1,0 +1,8 @@
+---
+/** Renders a write-up's Markdown with its internal links kept inside the original design. */
+import { toOriginalLinks } from '../../lib/original';
+
+const html = toOriginalLinks(await Astro.slots.render('default'));
+---
+
+<Fragment set:html={html} />

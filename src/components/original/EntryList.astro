@@ -36,6 +36,16 @@ const isExternal = (href: string) => /^https?:\/\//.test(href);
 	}
 </ul>
 
+<script is:inline>
+	document.querySelectorAll('[data-posthog-blog-post]').forEach((link) => {
+		link.addEventListener('click', () => {
+			window.posthog?.capture('blog_opened', {
+				link_location: 'post_list',
+			});
+		});
+	});
+</script>
+
 <style>
 	/* Date column sizes to the widest date in the list, like the design. */
 	.entries {
@@ -44,24 +54,17 @@ const isExternal = (href: string) => /^https?:\/\//.test(href);
 		padding: 0;
 		display: grid;
 		grid-template-columns: max-content 1fr;
-		column-gap: 1.5rem;
+		column-gap: 1rem;
+		row-gap: 1rem;
 	}
 
 	li {
 		display: grid;
 		grid-template-columns: subgrid;
 		grid-column: span 2;
-		align-items: baseline;
-		padding: 0.6rem 0;
-		border-bottom: 1px solid var(--line);
 	}
 
 	.date {
-		font-size: 0.75rem;
-		font-weight: 500;
-		letter-spacing: 0.12em;
-		text-transform: uppercase;
-		font-variant-numeric: tabular-nums;
 		color: var(--muted);
 	}
 
@@ -70,12 +73,9 @@ const isExternal = (href: string) => /^https?:\/\//.test(href);
 		text-decoration: none;
 	}
 
-	a.title {
-		transition: color 0.15s;
-	}
-
 	a.title:hover {
-		color: var(--accent);
+		text-decoration: underline;
+		text-underline-offset: 3px;
 	}
 
 	.title.plain {
@@ -90,36 +90,6 @@ const isExternal = (href: string) => /^https?:\/\//.test(href);
 		li {
 			grid-template-columns: 1fr;
 			grid-column: auto;
-			row-gap: 0.125rem;
-		}
-	}
-
-	/* Plain mode: the original loose list. */
-	:global(html[data-mode='plain']) .entries {
-		column-gap: 1rem;
-		row-gap: 1rem;
-	}
-
-	:global(html[data-mode='plain']) li {
-		padding: 0;
-		border: 0;
-	}
-
-	:global(html[data-mode='plain']) .date {
-		font-size: inherit;
-		font-weight: inherit;
-		letter-spacing: normal;
-		text-transform: none;
-	}
-
-	:global(html[data-mode='plain']) a.title:hover {
-		color: var(--fg-strong);
-		text-decoration: underline;
-		text-underline-offset: 3px;
-	}
-
-	@media (max-width: 639px) {
-		:global(html[data-mode='plain']) li {
 			row-gap: 0.125rem;
 		}
 	}

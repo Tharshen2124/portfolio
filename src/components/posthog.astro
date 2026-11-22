@@ -15,9 +15,6 @@ const isDevelopment = import.meta.env.DEV;
 		!function(t,e){var o,n,p,r;e.__SV||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}(p=t.createElement("script")).type="text/javascript",p.crossOrigin="anonymous",p.async=!0,p.src=s.api_host+"/static/array.js",(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r);var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],Object.defineProperty(u,"toString",{configurable:!0,enumerable:!0,writable:!0,value:function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e}}),Object.defineProperty(u.people,"toString",{configurable:!0,enumerable:!0,writable:!0,value:function(){return u.toString(1)+".people (stub)"}}),o="capture identify alias people.set people.set_once set_config register register_once unregister opt_out_capturing has_opted_out_capturing opt_in_capturing reset isFeatureEnabled onFeatureFlags getFeatureFlag getFeatureFlagPayload reloadFeatureFlags group updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures getActiveMatchingSurveys getSurveys getNextSurveyStep onSessionId".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
 		window.posthog.init(apiKey, {
 			api_host: apiHost,
-			// Pages change without a full load (Astro's ClientRouter), so count a
-			// pageview on every history change rather than only on load.
-			capture_pageview: 'history_change',
 			logs: {
 				serviceName: 'portfolio-web',
 				environment: isDevelopment ? 'development' : 'production',
@@ -29,63 +26,4 @@ const isDevelopment = import.meta.env.DEV;
 			},
 		});
 	}
-</script>
-
-<script>
-	// Link-click analytics for the whole site, as one delegated listener. Pages
-	// are swapped in by the ClientRouter, so per-page listeners bound on load
-	// would miss every page after the first.
-	type Props = Record<string, string | undefined>;
-	type PostHog = {
-		capture: (event: string, props: Props) => void;
-		logger?: { info: (message: string, props: Props) => void };
-	};
-	const posthog = () => (window as { posthog?: PostHog }).posthog;
-
-	const tracked: [string, (el: HTMLElement) => void][] = [
-		[
-			'[data-posthog-social-profile]',
-			(el) => posthog()?.capture('social_profile_opened', { profile: el.dataset.posthogSocialProfile }),
-		],
-		[
-			'[data-posthog-blog-post]',
-			() => posthog()?.capture('blog_opened', { link_location: 'post_list' }),
-		],
-		[
-			'[data-posthog-blog-link]',
-			(el) => {
-				const props = { link_location: el.dataset.posthogBlogLink };
-				posthog()?.capture('blog_opened', props);
-				posthog()?.logger?.info('portfolio blog opened', props);
-			},
-		],
-		[
-			'[data-posthog-project-repository]',
-			(el) => {
-				const props = { project_name: el.dataset.posthogProjectRepository };
-				posthog()?.capture('project_repository_opened', props);
-				posthog()?.logger?.info('portfolio project repository opened', props);
-			},
-		],
-		[
-			'[data-posthog-project-live-site]',
-			(el) => {
-				const props = { project_name: el.dataset.posthogProjectLiveSite };
-				posthog()?.capture('project_live_site_opened', props);
-				posthog()?.logger?.info('portfolio project live site opened', props);
-			},
-		],
-		[
-			'[data-posthog-experience-resource]',
-			() => posthog()?.capture('experience_resource_opened', { link_location: 'article_footer' }),
-		],
-	];
-
-	document.addEventListener('click', (event) => {
-		if (!(event.target instanceof Element)) return;
-		for (const [selector, send] of tracked) {
-			const el = event.target.closest<HTMLElement>(selector);
-			if (el) send(el);
-		}
-	});
 </script>

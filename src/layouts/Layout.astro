@@ -1,122 +1,124 @@
 ---
+/**
+ * The main design of the site: every screen dressed as a game's menus, over
+ * a misty underground scene. (The original, plain design is OriginalLayout.)
+ */
 import { Font } from 'astro:assets';
-import { ClientRouter } from 'astro:transitions';
-import Nav from '../components/Nav.astro';
-import Footer from '../components/Footer.astro';
-import Space from '../components/Space.astro';
-import Gate from '../components/Gate.astro';
-import PostHog from '../components/posthog.astro';
-import { site } from '../data/site';
-import { absoluteUrl, defaultImage, pagePath, type JsonLd } from '../lib/seo';
-import '../styles/global.css';
+import SiteHead, { type SeoProps } from '../components/SiteHead.astro';
+import Scene from '../components/game/Scene.astro';
+import Sprite from '../components/game/Sprite.astro';
+import '../styles/game.css';
 
-interface Props {
-	title?: string;
-	description?: string;
-	type?: 'website' | 'article' | 'profile';
-	/** Keep the page out of search results (e.g. 404). */
-	noindex?: boolean;
-	/** Markdown copy of this page, advertised to agents via rel="alternate". */
-	markdownUrl?: string;
-	jsonLd?: JsonLd;
-	/** Skip the reading column so the page can lay itself out edge to edge. */
-	fullBleed?: boolean;
+interface Props extends SeoProps {
+	/** The pale title hall, or the darker cavern behind every other screen. */
+	scene?: 'title' | 'cavern';
+	/** Where Escape leads: the screen this one was opened from. */
+	back?: string;
+	/** Define the emblems too, for screens with medallions and badges. */
+	withEmblems?: boolean;
 }
 
-const {
-	title,
-	description = site.description,
-	type = 'website',
-	noindex = false,
-	markdownUrl,
-	jsonLd,
-	fullBleed = false,
-} = Astro.props;
-const pageTitle = title ? `${title} | ${site.title}` : site.title;
-const canonicalURL = absoluteUrl(pagePath(Astro.url));
-const image = await defaultImage();
+const { scene = 'cavern', back, withEmblems = false, ...seo } = Astro.props;
 ---
 
 <!doctype html>
 <html lang="en">
 	<head>
-		<meta charset="utf-8" />
-		<meta name="viewport" content="width=device-width, initial-scale=1" />
-		<link rel="icon" href="/favicon.ico" sizes="32x32" />
-		<link rel="icon" type="image/png" sizes="192x192" href="/android-chrome-192x192.png" />
-		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-		<link rel="manifest" href="/site.webmanifest" />
-		<meta name="generator" content={Astro.generator} />
-		<title>{pageTitle}</title>
-		<meta name="description" content={description} />
-		<meta name="author" content={site.name} />
-		{noindex && <meta name="robots" content="noindex" />}
-		<link rel="canonical" href={canonicalURL} />
-		<meta name="theme-color" content="#05070d" />
-		<script is:inline>
-			// Apply the reader's chosen mode before first paint: "plain" (the original
-			// minimal site), "map" (the star map), or "ask" when they haven't chosen.
-			(() => {
-				let mode;
-				try {
-					mode = localStorage.getItem('site-mode');
-				} catch {}
-				document.documentElement.dataset.mode = mode === 'plain' || mode === 'map' ? mode : 'ask';
-				if (mode === 'plain') {
-					const dark = matchMedia('(prefers-color-scheme: dark)').matches;
-					document.querySelector('meta[name="theme-color"]').content = dark ? '#000000' : '#ffffff';
-				}
-
-				// Page changes swap in a new <html> and <head> without re-running this
-				// script, so carry the mode and theme colour over to the incoming page.
-				document.addEventListener('astro:before-swap', ({ newDocument }) => {
-					newDocument.documentElement.dataset.mode = document.documentElement.dataset.mode;
-					const color = document.querySelector('meta[name="theme-color"]').content;
-					newDocument.querySelector('meta[name="theme-color"]').content = color;
-				});
-			})();
-		</script>
-		<ClientRouter />
-
-		<meta property="og:title" content={pageTitle} />
-		<meta property="og:description" content={description} />
-		<meta property="og:type" content={type} />
-		<meta property="og:url" content={canonicalURL} />
-		<meta property="og:site_name" content={site.title} />
-		<meta property="og:locale" content={site.locale} />
-		<meta property="og:image" content={image.url} />
-		<meta property="og:image:width" content={String(image.width)} />
-		<meta property="og:image:height" content={String(image.height)} />
-		<meta property="og:image:alt" content={image.alt} />
-		{type === 'article' && <meta property="article:author" content={site.url} />}
-
-		<meta name="twitter:card" content="summary" />
-		<meta name="twitter:title" content={pageTitle} />
-		<meta name="twitter:description" content={description} />
-		<meta name="twitter:image" content={image.url} />
-		<meta name="twitter:image:alt" content={image.alt} />
-
-		<link rel="sitemap" href="/sitemap-index.xml" />
-		<link
-			rel="alternate"
-			type="application/rss+xml"
-			title={`${site.name} on Substack`}
-			href={`${site.substackUrl}/feed`}
-		/>
-		{markdownUrl && <link rel="alternate" type="text/markdown" href={markdownUrl} />}
-		{jsonLd && <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />}
-		<Font cssVariable="--font-sans" preload />
-		<Font cssVariable="--font-display" preload />
-		<Font cssVariable="--font-title" />
-		<PostHog />
+		<SiteHead {...seo} themeColor="#030406" />
+		<Font cssVariable="--font-carved" preload />
+		<Font cssVariable="--font-book" preload={[{ style: 'normal' }]} />
 	</head>
-	<body>
-		<Space dim={!fullBleed} />
-		<Nav />
-		<main class={fullBleed ? undefined : 'container'}>
-			<slot />
-		</main>
-		<Footer />
-		<Gate />
+	<body data-back={back}>
+		<a class="skip" href="#main">Skip to content</a>
+		<Sprite withEmblems={withEmblems} />
+		<Scene variant={scene} />
+		<slot />
 	</body>
 </html>
+
+<script>
+	// Menus work like the game's: hovering or focusing an item selects it, the
+	// arrow keys move the selection and Enter follows it. Escape goes back, and
+	// the left and right arrows step to the neighbouring screens.
+	type Track = (el: HTMLElement) => void;
+
+	const linkOf = (item: Element) =>
+		(item.matches('a') ? item : item.querySelector('a')) as HTMLAnchorElement | null;
+
+	for (const menu of document.querySelectorAll<HTMLElement>('[data-menu]')) {
+		const items = [...menu.querySelectorAll<HTMLElement>('[data-item]')];
+		const select = (item: HTMLElement) => {
+			if (item.hasAttribute('data-selected')) return;
+			for (const other of items) other.toggleAttribute('data-selected', other === item);
+			menu.dispatchEvent(new CustomEvent('menuselect', { detail: item }));
+		};
+		for (const item of items) {
+			item.addEventListener('pointerenter', (event) => {
+				if (event.pointerType === 'mouse') select(item);
+			});
+			item.addEventListener('focusin', () => select(item));
+		}
+		const first = items.find((item) => item.hasAttribute('data-selected')) ?? items[0];
+		if (first) {
+			first.removeAttribute('data-selected');
+			select(first);
+		}
+	}
+
+	document.addEventListener('keydown', (event) => {
+		if (event.defaultPrevented || event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
+		const target = event.target as HTMLElement;
+		if (target.closest('input, textarea, select, [contenteditable]')) return;
+
+		const menu = target.closest<HTMLElement>('[data-menu]') ?? document.querySelector<HTMLElement>('[data-menu][data-keys]');
+		const items = menu ? [...menu.querySelectorAll<HTMLElement>('[data-item]')] : [];
+		const current = items.findIndex((item) => item.hasAttribute('data-selected'));
+
+		if ((event.key === 'ArrowDown' || event.key === 'ArrowUp') && items.length) {
+			const step = event.key === 'ArrowDown' ? 1 : -1;
+			const next = items[(current + step + items.length) % items.length];
+			(linkOf(next) ?? next).focus();
+			event.preventDefault();
+		} else if (event.key === 'Enter' && target === document.body && current >= 0) {
+			linkOf(items[current])?.click();
+		} else if (event.key === 'Escape' && document.body.dataset.back) {
+			window.location.href = document.body.dataset.back;
+		} else if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+			document.querySelector<HTMLAnchorElement>(`[data-key="${event.key}"]`)?.click();
+		}
+	});
+
+	// Link analytics, matching the events the original design records.
+	type PostHog = {
+		capture: (event: string, props: Record<string, string | undefined>) => void;
+		logger?: { info: (message: string, props: Record<string, string | undefined>) => void };
+	};
+	const posthog = () => (window as { posthog?: PostHog }).posthog;
+	const tracked: [string, Track][] = [
+		['[data-posthog-social-profile]', (el) => posthog()?.capture('social_profile_opened', { profile: el.dataset.posthogSocialProfile })],
+		[
+			'[data-posthog-project-repository]',
+			(el) => {
+				const props = { project_name: el.dataset.posthogProjectRepository };
+				posthog()?.capture('project_repository_opened', props);
+				posthog()?.logger?.info('portfolio project repository opened', props);
+			},
+		],
+		[
+			'[data-posthog-project-live-site]',
+			(el) => {
+				const props = { project_name: el.dataset.posthogProjectLiveSite };
+				posthog()?.capture('project_live_site_opened', props);
+				posthog()?.logger?.info('portfolio project live site opened', props);
+			},
+		],
+		['[data-posthog-experience-resource]', () => posthog()?.capture('experience_resource_opened', { link_location: 'article_footer' })],
+	];
+	document.addEventListener('click', (event) => {
+		if (!(event.target instanceof Element)) return;
+		for (const [selector, send] of tracked) {
+			const el = event.target.closest<HTMLElement>(selector);
+			if (el) send(el);
+		}
+	});
+</script>

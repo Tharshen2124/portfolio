@@ -3,6 +3,10 @@ import { defineConfig, fontProviders } from 'astro/config';
 import sitemap from '@astrojs/sitemap';
 import { site } from './src/data/site';
 
+// The original design's copies of write-ups and projects point their canonical
+// URL at the main design's pages, so only those belong in the sitemap.
+const duplicate = /\/original\/(experience\/|projects$)/;
+
 // https://astro.build/config
 export default defineConfig({
 	site: site.url,
@@ -12,9 +16,16 @@ export default defineConfig({
 	build: {
 		format: 'file',
 	},
-	integrations: [sitemap()],
+	// Pages that only exist in the original design now. public/_redirects sends
+	// real 301s on Cloudflare; these cover `astro dev` and any other host.
+	redirects: {
+		'/experience': '/original/experience',
+		'/blog': '/original/blog',
+	},
+	integrations: [sitemap({ filter: (page) => !duplicate.test(page) })],
 	fonts: [
 		{
+			// The original design.
 			provider: fontProviders.fontsource(),
 			name: 'Hanken Grotesk',
 			cssVariable: '--font-sans',
@@ -24,25 +35,24 @@ export default defineConfig({
 			fallbacks: ['sans-serif'],
 		},
 		{
-			// Wide-tracked serif for destination labels and page titles.
+			// The game design's carved capitals: menus, titles and labels.
 			provider: fontProviders.fontsource(),
-			name: 'Cormorant Garamond',
-			cssVariable: '--font-display',
-			weights: [500],
+			name: 'Cinzel',
+			cssVariable: '--font-carved',
+			weights: ['400 700'],
 			styles: ['normal'],
 			subsets: ['latin'],
 			fallbacks: ['Georgia', 'serif'],
 		},
 		{
-			// Heavy condensed face for the title screen only. Not preloaded: it is
-			// fetched only when the first-visit gate is actually on screen.
+			// The game design's reading face: descriptions and write-ups.
 			provider: fontProviders.fontsource(),
-			name: 'Anton',
-			cssVariable: '--font-title',
-			weights: [400],
-			styles: ['normal'],
+			name: 'EB Garamond',
+			cssVariable: '--font-book',
+			weights: ['400 700'],
+			styles: ['normal', 'italic'],
 			subsets: ['latin'],
-			fallbacks: ['Impact', 'sans-serif'],
+			fallbacks: ['Georgia', 'serif'],
 		},
 	],
 });

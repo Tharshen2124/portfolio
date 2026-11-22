@@ -1,0 +1,21 @@
+---
+/** The neighbouring screens, in the top corners, on the arrow keys. */
+import { neighbours, type SectionPath } from '../../lib/screens';
+
+interface Props {
+	current: SectionPath;
+}
+
+const { previous, next } = neighbours(Astro.props.current);
+---
+
+<nav class="tabs" aria-label="Neighbouring screens" data-enter style="--delay: 250">
+	<a class="tab" href={previous.path} data-key="ArrowLeft">
+		<span class="keycap" aria-hidden="true">←</span><span class="tab-glyph" aria-hidden="true">‹</span>
+		<span><span class="visually-hidden">Previous: </span>{previous.short}</span>
+	</a>
+	<a class="tab" href={next.path} data-key="ArrowRight">
+		<span><span class="visually-hidden">Next: </span>{next.short}</span>
+		<span class="tab-glyph" aria-hidden="true">›</span><span class="keycap" aria-hidden="true">→</span>
+	</a>
+</nav>

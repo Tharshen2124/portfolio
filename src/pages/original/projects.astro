@@ -1,0 +1,137 @@
+---
+import Layout from '../../layouts/OriginalLayout.astro';
+import StackList from '../../components/original/StackList.astro';
+import { site } from '../../data/site';
+import { getProjects, projectsDescription, projectsSchema } from '../../lib/projects';
+import { originalPath } from '../../lib/original';
+
+const projects = await getProjects();
+---
+
+<Layout
+	title="Projects"
+	description={projectsDescription}
+	canonicalPath="/projects"
+	jsonLd={projectsSchema(projects)}
+>
+	<h1 class="page-title">Projects</h1>
+	<p class="lede">
+		Things I've built, mostly to learn DevOps, SRE and observability by doing. The details live in
+		each repository, and there's more on <a href={site.links.github} target="_blank"
+			rel="noopener noreferrer">my GitHub</a
+		>.
+	</p>
+
+	<ul class="projects">
+		{
+			projects.map(({ data }) => (
+				<li>
+					<h2 class="project-name">
+						<a
+							href={data.repo}
+							target="_blank"
+							rel="noopener noreferrer"
+							data-posthog-project-repository={data.name}
+						>
+							{data.name}
+						</a>
+					</h2>
+					<p class="justify">{data.summary}</p>
+					{data.stack.length > 0 && <StackList stack={data.stack} />}
+					<p class="links">
+						<a
+							class="more-link"
+							href={data.repo}
+							target="_blank"
+							rel="noopener noreferrer"
+							data-posthog-project-repository={data.name}
+						>
+							repository ↗
+						</a>
+						{data.site && (
+							<a
+								class="more-link"
+								href={data.site}
+								target="_blank"
+								rel="noopener noreferrer"
+								data-posthog-project-live-site={data.name}
+							>
+								live site ↗
+							</a>
+						)}
+						{data.writeup && (
+							<a class="more-link" href={originalPath(data.writeup)}>
+								write-up →
+							</a>
+						)}
+					</p>
+				</li>
+			))
+		}
+	</ul>
+</Layout>
+
+<script is:inline>
+	document.querySelectorAll('[data-posthog-project-repository]').forEach((link) => {
+		link.addEventListener('click', () => {
+			window.posthog?.capture('project_repository_opened', {
+				project_name: link.dataset.posthogProjectRepository,
+			});
+			window.posthog?.logger?.info('portfolio project repository opened', {
+				project_name: link.dataset.posthogProjectRepository,
+			});
+		});
+	});
+
+	document.querySelectorAll('[data-posthog-project-live-site]').forEach((link) => {
+		link.addEventListener('click', () => {
+			window.posthog?.capture('project_live_site_opened', {
+				project_name: link.dataset.posthogProjectLiveSite,
+			});
+			window.posthog?.logger?.info('portfolio project live site opened', {
+				project_name: link.dataset.posthogProjectLiveSite,
+			});
+		});
+	});
+</script>
+
+<style>
+	.projects {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+	}
+
+	li + li {
+		margin-top: 2.25rem;
+	}
+
+	.project-name {
+		font-size: 1.1875rem;
+		letter-spacing: -0.01em;
+		margin: 0 0 0.5rem;
+	}
+
+	.project-name a {
+		text-decoration: none;
+	}
+
+	.project-name a:hover {
+		text-decoration: underline;
+		text-underline-offset: 3px;
+	}
+
+	li p {
+		margin: 0.5rem 0;
+	}
+
+	.links {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0 1.25rem;
+	}
+
+	.links .more-link {
+		margin-top: 0;
+	}
+</style>

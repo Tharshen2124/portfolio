@@ -1,9 +1,10 @@
 ---
-import Layout from '../../layouts/Layout.astro';
-import EntryList from '../../components/EntryList.astro';
-import { categories, getExperience, experienceHref } from '../../lib/experience';
-import { formatMonth } from '../../lib/format';
-import { absoluteUrl, breadcrumbSchema, graph, personId, personSchema } from '../../lib/seo';
+import Layout from '../../../layouts/OriginalLayout.astro';
+import EntryList from '../../../components/original/EntryList.astro';
+import { categories, getExperience, experienceHref } from '../../../lib/experience';
+import { formatMonth } from '../../../lib/format';
+import { absoluteUrl, breadcrumbSchema, graph, personId, personSchema } from '../../../lib/seo';
+import { originalPath } from '../../../lib/original';
 
 const experience = await getExperience();
 
@@ -12,11 +13,14 @@ const sections = categories.map(({ id, label }) => ({
 	label,
 	entries: experience
 		.filter((entry) => entry.data.category === id)
-		.map((entry) => ({
-			date: formatMonth(entry.data.startDate),
-			title: `${entry.data.role}, ${entry.data.organization}`,
-			href: experienceHref(entry),
-		})),
+		.map((entry) => {
+			const href = experienceHref(entry);
+			return {
+				date: formatMonth(entry.data.startDate),
+				title: `${entry.data.role}, ${entry.data.organization}`,
+				href: href && originalPath(href),
+			};
+		}),
 }));
 
 const description = "Write-ups of Tharshen's work and volunteer experience.";
@@ -24,7 +28,7 @@ const writeups = experience.filter((entry) => experienceHref(entry));
 const jsonLd = graph(
 	{
 		'@type': 'CollectionPage',
-		url: absoluteUrl('/experience'),
+		url: absoluteUrl(originalPath('/experience')),
 		name: 'Experience',
 		description,
 		author: { '@id': personId },
@@ -34,14 +38,14 @@ const jsonLd = graph(
 				'@type': 'ListItem',
 				position: i + 1,
 				name: entry.data.title,
-				url: absoluteUrl(experienceHref(entry)!),
+				url: absoluteUrl(originalPath(experienceHref(entry)!)),
 			})),
 		},
 	},
 	personSchema(),
 	breadcrumbSchema([
-		{ name: 'Home', path: '/' },
-		{ name: 'Experience', path: '/experience' },
+		{ name: 'Home', path: originalPath('/') },
+		{ name: 'Experience', path: originalPath('/experience') },
 	]),
 );
 ---

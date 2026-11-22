@@ -1,0 +1,21 @@
+---
+/** One ornament from the page's sprite. Decorative, so hidden from assistive tech. */
+import { ornaments, type OrnamentName } from '../../lib/ornaments';
+
+interface Props {
+	name: OrnamentName;
+	class?: string;
+}
+
+const { name, class: className } = Astro.props;
+const { width, height } = ornaments[name];
+---
+
+<svg
+	class:list={['orn', className]}
+	viewBox={`0 0 ${width} ${height}`}
+	width={width}
+	height={height}
+	aria-hidden="true"
+	focusable="false"><use href={`#orn-${name}`}></use></svg
+>

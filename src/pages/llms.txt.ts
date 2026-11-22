@@ -5,6 +5,7 @@ import { formatDay, formatRange } from '../lib/format';
 import { getSubstackFeed } from '../lib/substack';
 import { getProjects } from '../lib/projects';
 import { absoluteUrl } from '../lib/seo';
+import { originalPath } from '../lib/original';
 
 /** Site overview for LLMs, following https://llmstxt.org. */
 export const GET: APIRoute = async () => {
@@ -19,7 +20,7 @@ export const GET: APIRoute = async () => {
 		'',
 		`${site.name} (Tharshen) is a Computer Science student at ${site.university.name} in Malaysia, working towards DevOps and Site Reliability Engineering roles. Tharshen interned as a full stack engineer at iFAST Global Hub AI and as a web engineer at MoneyLion, led IT Society and Hackerspace MMU as President, and directed BarCamp Cyberjaya. These days Tharshen is learning observability with OpenTelemetry and the VictoriaMetrics stack and writing about it on Substack.`,
 		'',
-		'Each experience write-up below links to a plain-Markdown version; the HTML page is at the same path without `.md`.',
+		'Each experience write-up below links to a plain-Markdown version; the HTML page is at the same path without `.md`. The site is dressed as a game\'s menus; a plain version of every page is under /original.',
 		'',
 		'## Experience',
 		'',
@@ -44,8 +45,11 @@ export const GET: APIRoute = async () => {
 		'## Links',
 		'',
 		`- [Home](${absoluteUrl('/')})`,
-		`- [All experience](${absoluteUrl('/experience')})`,
-		`- [All projects](${absoluteUrl('/projects')})`,
+		`- [Work experience](${absoluteUrl('/work')})`,
+		`- [Volunteer experience](${absoluteUrl('/volunteer')})`,
+		`- [Projects](${absoluteUrl('/projects')})`,
+		`- [Plain version of the site](${absoluteUrl(originalPath('/'))})`,
+		`- [Blog](${absoluteUrl(originalPath('/blog'))})`,
 		`- [GitHub](${site.links.github})`,
 		`- [LinkedIn](${site.links.linkedin})`,
 		`- [Substack](${site.links.substack})`,

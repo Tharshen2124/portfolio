@@ -1,0 +1,305 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Back from '../components/game/Back.astro';
+import Ornament from '../components/game/Ornament.astro';
+import ScreenTitle from '../components/game/ScreenTitle.astro';
+import Tabs from '../components/game/Tabs.astro';
+import { site } from '../data/site';
+import { categorySchema, experienceHref, getExperience } from '../lib/experience';
+import { formatRange } from '../lib/format';
+
+const work = (await getExperience()).filter((entry) => entry.data.category === 'work');
+
+const slots = work.map((entry) => {
+	const { role, organization, startDate, endDate, location = '', summary, skills } = entry.data;
+	// "Greater Kuala Lumpur · On-site": the place is carved, the arrangement joins the dates.
+	const [place, arrangement] = location.split(' · ');
+	return {
+		href: experienceHref(entry)!,
+		organization,
+		role,
+		summary,
+		skills,
+		place,
+		when: [formatRange(startDate, endDate), arrangement].filter(Boolean).join(' · '),
+	};
+});
+
+const description =
+	"Tharshen's internships: full stack engineering at iFAST Global Hub AI and web engineering at MoneyLion, with a write-up of each.";
+---
+
+<Layout title="Work Experience" description={description} jsonLd={categorySchema('work', work, description)} back="/">
+	<div class="screen">
+		<Tabs current="/work" />
+		<main id="main" class="work">
+			<ScreenTitle>Work Experience</ScreenTitle>
+
+			<ol class="slots" data-menu data-keys data-enter style="--delay: 350">
+				{
+					slots.map((slot, i) => (
+						<li class="slot" data-item>
+							<Ornament name="hook" class="slot-hook" />
+							<span class="slot-number" aria-hidden="true">
+								{i + 1}.
+							</span>
+							<div class="slot-band">
+								<div class="slot-main">
+									<h2 class="slot-org">
+										<a class="slot-link" href={slot.href}>
+											{slot.organization}
+										</a>
+									</h2>
+									<p class="slot-role">{slot.role}</p>
+									<p class="slot-summary">{slot.summary}</p>
+									<p class="slot-skills">{slot.skills.join(' · ')}</p>
+								</div>
+								<p class="slot-meta">
+									<span class="slot-place">{slot.place}</span>
+									<span class="slot-when">{slot.when}</span>
+								</p>
+							</div>
+							<Ornament name="pointer" class="pointer" />
+							<Ornament name="pointer" class="pointer pointer-end" />
+						</li>
+					))
+				}
+				<li class="slot slot-new" data-item>
+					<Ornament name="hook" class="slot-hook" />
+					<span class="slot-number" aria-hidden="true">{slots.length + 1}.</span>
+					<div class="slot-band">
+						<div class="slot-main">
+							<h2 class="slot-org">
+								<a class="slot-link" href={site.links.linkedin} target="_blank" rel="noopener noreferrer" data-posthog-social-profile="linkedin">
+									New Game<span class="visually-hidden">: say hello on LinkedIn</span>
+								</a>
+							</h2>
+							<p class="slot-role">Aiming for DevOps and SRE roles next. Say hello on LinkedIn <span aria-hidden="true">↗</span></p>
+						</div>
+					</div>
+					<Ornament name="pointer" class="pointer" />
+					<Ornament name="pointer" class="pointer pointer-end" />
+				</li>
+			</ol>
+
+			<Back href="/" to="the title menu" />
+		</main>
+	</div>
+</Layout>
+
+<style>
+	.work {
+		display: flex;
+		flex-direction: column;
+		min-height: calc(100dvh - 5rem);
+		padding-top: clamp(0.5rem, 3vh, 2rem);
+	}
+
+	.slots {
+		display: grid;
+		gap: clamp(1.4rem, 3.5vh, 2.2rem);
+		width: min(100% - 2 * var(--gutter), 64rem);
+		margin: clamp(2rem, 6vh, 3.5rem) auto 0;
+		padding: 0;
+		list-style: none;
+	}
+
+	.slot {
+		--hook: clamp(2.6rem, 2rem + 2vw, 3.6rem);
+		position: relative;
+		display: grid;
+		grid-template-columns: var(--hook) minmax(0, 1fr);
+		align-items: start;
+		min-height: calc(var(--hook) * 1.55);
+		padding-top: calc(var(--hook) * 0.24);
+	}
+
+	/* The hook, and the hairline that runs on from its top stroke. */
+	.slot > :global(.slot-hook) {
+		position: absolute;
+		left: 0;
+		top: 0;
+		width: var(--hook);
+		height: auto;
+		color: var(--pale);
+	}
+
+	.slot::before {
+		content: '';
+		position: absolute;
+		top: calc(var(--hook) * 0.135);
+		left: calc(var(--hook) * 0.97);
+		right: 0;
+		height: 2px;
+		border-radius: 2px;
+		background: linear-gradient(to right, var(--hair), var(--hair) 72%, transparent);
+		box-shadow: 0 0 6px rgba(255, 255, 255, 0.3);
+	}
+
+	.slot-number {
+		grid-column: 1;
+		align-self: center;
+		padding-left: calc(var(--hook) * 0.42);
+		font-family: var(--font-book);
+		font-size: clamp(2rem, 1.4rem + 2vw, 3.1rem);
+		line-height: 1;
+		color: #fff;
+		text-shadow: var(--glow-text);
+	}
+
+	.slot-band {
+		position: relative;
+		isolation: isolate;
+		display: flex;
+		gap: 1rem 2rem;
+		justify-content: space-between;
+		margin-left: clamp(0.75rem, 2vw, 1.5rem);
+		padding: clamp(0.85rem, 2vh, 1.25rem) clamp(1rem, 2.5vw, 1.75rem);
+		border-radius: 3px;
+		transition:
+			background-color 0.3s,
+			box-shadow 0.3s;
+	}
+
+	/* The chosen slot lights up in the deep blue of a save file. */
+	.slot-band::before {
+		content: '';
+		position: absolute;
+		inset: 0;
+		z-index: -1;
+		border-radius: inherit;
+		background:
+			radial-gradient(ellipse 50% 120% at 85% 50%, rgba(140, 165, 255, 0.28), transparent 70%),
+			linear-gradient(to right, var(--band-a), var(--band-b) 75%, rgba(46, 72, 162, 0.35));
+		box-shadow:
+			0 0 0 1px rgba(174, 191, 255, 0.18) inset,
+			0 0 28px rgba(80, 110, 220, 0.28);
+		opacity: 0;
+		transition: opacity 0.35s var(--ease);
+	}
+
+	.slot[data-selected] .slot-band::before,
+	.slot:hover .slot-band::before {
+		opacity: 1;
+	}
+
+	.slot-main {
+		min-width: 0;
+		max-width: 40rem;
+	}
+
+	.slot-org {
+		margin: 0;
+		font-family: var(--font-carved);
+		font-weight: 500;
+		font-size: clamp(1.35rem, 1.05rem + 1.2vw, 2.05rem);
+		line-height: 1.15;
+		letter-spacing: 0.05em;
+		text-shadow: var(--glow-text);
+	}
+
+	.slot-link {
+		text-decoration: none;
+	}
+
+	/* The whole slot opens the save. */
+	.slot-link::after {
+		content: '';
+		position: absolute;
+		inset: 0;
+		z-index: 1;
+	}
+
+	.slot-link:focus-visible {
+		outline: none;
+	}
+
+	.slot-role {
+		margin: 0.3rem 0 0;
+		font-size: clamp(1.1rem, 1rem + 0.35vw, 1.3rem);
+		color: var(--pale);
+	}
+
+	.slot-summary {
+		margin: 0.55rem 0 0;
+		font-size: 1.08rem;
+		line-height: 1.5;
+		color: var(--soft);
+		text-wrap: pretty;
+	}
+
+	.slot-skills {
+		margin: 0.5rem 0 0;
+		font-size: 0.98rem;
+		font-style: italic;
+		color: var(--dim);
+	}
+
+	.slot-meta {
+		display: flex;
+		flex-direction: column;
+		align-items: flex-end;
+		gap: 0.35rem;
+		flex: none;
+		margin: 0;
+		text-align: right;
+	}
+
+	.slot-place {
+		max-width: 15rem;
+		font-family: var(--font-carved);
+		font-weight: 500;
+		font-size: 0.98rem;
+		letter-spacing: 0.08em;
+		line-height: 1.3;
+		color: var(--pale);
+		text-shadow: var(--glow-text);
+	}
+
+	.slot-when {
+		font-size: 1.02rem;
+		color: var(--soft);
+	}
+
+	.slot-new .slot-org {
+		font-size: clamp(1.25rem, 1rem + 1vw, 1.8rem);
+	}
+
+	.slot-new .slot-role {
+		color: var(--soft);
+	}
+
+	/* Pointers either side of the chosen slot. */
+	.slot > :global(.pointer) {
+		position: absolute;
+		top: calc(50% + var(--hook) * 0.12);
+		left: calc(var(--hook) * -0.95);
+		width: clamp(1.9rem, 1.5rem + 1vw, 2.6rem);
+		margin-top: -0.7rem;
+		color: var(--pale);
+	}
+
+	.slot > :global(.pointer-end) {
+		left: auto;
+		right: calc(var(--hook) * -0.95);
+	}
+
+	/* The pointers sit outside the list; without room for them the band alone shows the choice. */
+	@media (max-width: 1040px) {
+		.slot > :global(.pointer) {
+			display: none;
+		}
+	}
+
+	@media (max-width: 760px) {
+		.slot-band {
+			flex-direction: column;
+			margin-left: 0.5rem;
+		}
+
+		.slot-meta {
+			align-items: flex-start;
+			text-align: left;
+		}
+	}
+</style>

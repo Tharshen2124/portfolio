@@ -1,0 +1,46 @@
+---
+import { pagePath } from '../../lib/seo';
+import { originalPath } from '../../lib/original';
+
+const home = originalPath('/');
+const links = [
+	{ href: home, label: 'Home' },
+	{ href: originalPath('/experience'), label: 'Experience' },
+	{ href: originalPath('/projects'), label: 'Projects' },
+	{ href: originalPath('/blog'), label: 'Blog' },
+];
+
+const path = pagePath(Astro.url);
+const isActive = (href: string) => (href === home ? path === home : path.startsWith(href));
+---
+
+<nav aria-label="Main">
+	{
+		links.map(({ href, label }) => (
+			<a href={href} aria-current={isActive(href) ? 'page' : undefined}>
+				{label}
+			</a>
+		))
+	}
+</nav>
+
+<style>
+	nav {
+		display: flex;
+		flex-wrap: wrap;
+		margin-left: -0.5rem;
+	}
+
+	a {
+		padding: 0.25rem 0.5rem;
+		margin: 0.25rem 0.125rem;
+		color: var(--muted);
+		text-decoration: none;
+		transition: color 0.15s;
+	}
+
+	a:hover,
+	a[aria-current='page'] {
+		color: var(--fg-strong);
+	}
+</style>

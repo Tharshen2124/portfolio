@@ -1,0 +1,22 @@
+---
+/** One emblem from the page's sprite (render <Sprite withEmblems /> on the page). */
+import type { EmblemName } from '../../lib/emblems';
+
+interface Props {
+	name: EmblemName;
+	class?: string;
+}
+
+const { name, class: className } = Astro.props;
+---
+
+<svg class:list={['emblem', className]} viewBox="0 0 48 48" aria-hidden="true" focusable="false"
+	><use href={`#emb-${name}`}></use></svg
+>
+
+<style>
+	.emblem {
+		display: block;
+		fill: currentColor;
+	}
+</style>
