@@ -248,6 +248,30 @@ function crest(): Ornament {
 	return { width: 520, height: 96, d: toPath([...half, ...mirrorX(half, cx), ...lantern]) };
 }
 
+/**
+ * The arrow keys' arrow, aimed left (CSS flips it for right): an inked shaft
+ * with swept barbs at its point and fletching that rolls into curls at its back.
+ */
+function keyArrow(): Ornament {
+	const cy = 12;
+	const barb: Pt[][] = [
+		...tendril(join(bezier([1.5, cy], [5, cy - 2.2], [8.5, cy - 5], [11, cy - 8.5]), curl([11, cy - 8.5], -55, 7, 0.75, 1, 0.3)), 1.8, 3, 1, 1.25, 0.35),
+	];
+	const fletch: Pt[][] = [
+		...tendril(join(bezier([38, cy - 0.6], [42, cy - 2], [45, cy - 5], [47, cy - 8]), curl([47, cy - 8], -60, 9, 0.85, 1, 0.3)), 2.4, 2.8, 1, 1.3, 0.3),
+		leaf([29, cy - 1], [36, cy - 5.5], 3),
+	];
+	const shapes: Pt[][] = [
+		...barb,
+		...mirrorY(barb, cy),
+		ink(bezier([1.5, cy], [16, cy], [32, cy], [46, cy]), swell(2, 2.8, 1.5, 0.35)),
+		...fletch,
+		...mirrorY(fletch, cy),
+		dot([48.5, cy], 1.7),
+	];
+	return { width: 52, height: 24, d: toPath(shapes) };
+}
+
 export const ornaments = {
 	pointer: pointer(),
 	divider: divider(),
@@ -259,6 +283,7 @@ export const ornaments = {
 	hook: hook(),
 	finial: finial(),
 	bracket: bracket(),
+	'key-arrow': keyArrow(),
 } satisfies Record<string, Ornament>;
 
 export type OrnamentName = keyof typeof ornaments;

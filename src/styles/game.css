@@ -225,26 +225,45 @@ a {
 	text-shadow: var(--glow-lit);
 }
 
-/* A key to press, as the game prints it. */
+/* A key to press: its name carved small beside the link, glowing with it. */
 .keycap {
-	display: inline-grid;
-	place-items: center;
-	min-width: 1.75em;
-	height: 1.35em;
-	padding: 0 0.32em;
-	border-radius: 0.28em;
-	background: var(--pale);
-	color: var(--void);
-	font-family: var(--font-book);
-	font-weight: 700;
-	font-size: 0.78em;
+	display: inline-block;
+	font-family: var(--font-carved);
+	font-weight: 500;
+	font-size: 0.72em;
 	line-height: 1;
-	letter-spacing: 0.02em;
-	text-shadow: none;
-	box-shadow: 0 0 10px rgba(255, 255, 255, 0.22);
+	letter-spacing: 0.14em;
+	text-transform: uppercase;
+	color: var(--soft);
+	text-shadow: var(--glow-text);
+	transition:
+		color 0.2s,
+		text-shadow 0.2s;
+}
+
+:is(a:hover, a:focus-visible) .keycap {
+	color: #fff;
+	text-shadow: var(--glow-lit);
+}
+
+/* An arrow key's hint: an inked arrow, lit with the link it sits in. */
+.key-arrow {
+	flex: none;
+	width: 2em;
+	height: auto;
+}
+
+.key-arrow-right {
+	transform: scaleX(-1);
+}
+
+:is(a:hover, a:focus-visible) > .key-arrow,
+:is(a:hover, a:focus-visible) .step-hint > .key-arrow {
+	filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.7)) drop-shadow(0 0 2px rgba(255, 255, 255, 0.6));
 }
 
 @media (hover: none) {
+	.key-arrow,
 	.keycap {
 		display: none;
 	}
@@ -295,7 +314,7 @@ a {
 }
 
 .back .keycap {
-	margin-right: 0.1em;
+	margin-right: 0.5em;
 }
 
 /* Arrival: a slow fade out of the dark, played once when the page opens. */

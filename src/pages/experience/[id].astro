@@ -2,6 +2,7 @@
 import type { GetStaticPaths } from 'astro';
 import { render } from 'astro:content';
 import Layout from '../../layouts/Layout.astro';
+import ArrowKey from '../../components/game/ArrowKey.astro';
 import Back from '../../components/game/Back.astro';
 import MenuLink from '../../components/game/MenuLink.astro';
 import Ornament from '../../components/game/Ornament.astro';
@@ -124,7 +125,7 @@ const meta = [formatRange(startDate, endDate), location].filter(Boolean).join(' 
 								{newer ? (
 									<a class="record-step" href={experienceHref(newer)} data-key="ArrowLeft">
 										<span class="step-hint">
-											<span class="keycap" aria-hidden="true">←</span> Newer
+											<ArrowKey direction="left" /> Newer
 										</span>
 										<span class="step-title">{newer.data.title}</span>
 									</a>
@@ -134,7 +135,7 @@ const meta = [formatRange(startDate, endDate), location].filter(Boolean).join(' 
 								{older && (
 									<a class="record-step step-older" href={experienceHref(older)} data-key="ArrowRight">
 										<span class="step-hint">
-											Older <span class="keycap" aria-hidden="true">→</span>
+											Older <ArrowKey direction="right" />
 										</span>
 										<span class="step-title">{older.data.title}</span>
 									</a>

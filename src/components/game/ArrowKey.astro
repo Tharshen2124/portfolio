@@ -1,0 +1,15 @@
+---
+/**
+ * The left or right arrow key's hint: an inked arrow with the ornaments' glow,
+ * standing on its own beside the link it belongs to.
+ */
+import Ornament from './Ornament.astro';
+
+interface Props {
+	direction: 'left' | 'right';
+}
+
+const { direction } = Astro.props;
+---
+
+<Ornament name="key-arrow" class={`key-arrow key-arrow-${direction}`} />

@@ -9,15 +9,19 @@
  * has no router, so going there is a full page load and the music stops; the
  * track position is saved (sessionStorage) and picked up again on return.
  *
- * Browsers only allow sound after a click or key press on the site, so on a
- * fresh visit the music starts with the visitor's first click or key press,
- * and the toggle pulses until then.
+ * Browsers only allow sound after a click, tap or key press on the site. When
+ * one is holding the music back on arrival, a "press any key" screen asks for
+ * that press, as a game's start screen would, and the music starts with it.
+ * Browsers that already allow sound (a returning visitor, say) skip it.
  */
 ---
 
 <button type="button" class="music" aria-pressed="true" title="Music" transition:persist="music-toggle">
 	<span class="bars" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
 	<span class="music-label">Music</span>
+</button>
+<button type="button" class="gate" hidden aria-label="Begin, with music">
+	<span class="gate-prompt"><span class="gate-keys">Press any key</span><span class="gate-tap">Tap anywhere</span> to begin</span>
 </button>
 <audio class="soundtrack" src="/audio/medieval-background.m4a" loop preload="none" transition:persist="soundtrack"></audio>
 
@@ -28,6 +32,7 @@
 
 	const audio = document.querySelector<HTMLAudioElement>('audio.soundtrack')!;
 	const toggle = document.querySelector<HTMLButtonElement>('button.music')!;
+	const gate = () => document.querySelector<HTMLButtonElement>('button.gate');
 
 	const read = (store: () => Storage, key: string) => {
 		try {
@@ -82,9 +87,45 @@
 		audio
 			.play()
 			.then(() => fadeTo(VOLUME, 2))
-			.catch(() => {
-				// Blocked until the visitor clicks or presses a key.
+			.catch((error: DOMException) => {
+				// Blocked until the visitor clicks or presses a key: ask for one.
+				if (error.name === 'NotAllowedError') openGate();
 			});
+	};
+
+	// The start screen, shown once per page load at most.
+	let gated = false;
+	const openGate = () => {
+		const el = gate();
+		if (gated || !el) return;
+		gated = true;
+		el.hidden = false;
+		el.focus({ preventScroll: true });
+		// Runs before every other listener, so the press that opens the site
+		// doesn't also follow a link or a menu item.
+		const begin = (event: Event) => {
+			if (event instanceof KeyboardEvent) {
+				// Modifier keys and Escape don't count as a press for sound.
+				if (['Shift', 'Control', 'Alt', 'Meta', 'CapsLock', 'Fn'].includes(event.key) || event.metaKey || event.ctrlKey) return;
+				if (event.key !== 'Escape') play();
+			} else {
+				play();
+			}
+			event.preventDefault();
+			event.stopImmediatePropagation();
+			closeGate(el);
+		};
+		const closeGate = (el: HTMLElement) => {
+			window.removeEventListener('keydown', begin, true);
+			el.removeEventListener('click', begin);
+			el.classList.add('gate-leaving');
+			el.addEventListener('animationend', () => (el.hidden = true), { once: true });
+			// No animation to wait for when motion is reduced.
+			if (matchMedia('(prefers-reduced-motion: reduce)').matches) el.hidden = true;
+			show();
+		};
+		window.addEventListener('keydown', begin, true);
+		el.addEventListener('click', begin);
 	};
 
 	const stop = () => {
@@ -213,6 +254,78 @@
 		}
 	}
 
+	/* The start screen, over the scene while the browser holds the music back. */
+	.gate {
+		position: fixed;
+		inset: 0;
+		z-index: 200;
+		display: grid;
+		place-items: center;
+		width: 100%;
+		padding: var(--gutter);
+		border: 0;
+		background: radial-gradient(ellipse at center, rgba(3, 4, 6, 0.9), rgba(3, 4, 6, 0.97) 70%);
+		backdrop-filter: blur(10px);
+		color: var(--pale);
+		font-family: var(--font-carved);
+		font-weight: 500;
+		font-size: clamp(1.05rem, 0.85rem + 1vw, 1.6rem);
+		letter-spacing: 0.22em;
+		text-align: center;
+		cursor: pointer;
+		animation: gate-in 0.6s var(--ease) both;
+	}
+
+	.gate[hidden] {
+		display: none;
+	}
+
+	.gate:focus {
+		outline: none;
+	}
+
+	.gate-prompt {
+		text-shadow: var(--glow-text);
+		animation: gate-breathe 2.6s ease-in-out infinite;
+	}
+
+	.gate-tap {
+		display: none;
+	}
+
+	@media (hover: none) and (pointer: coarse) {
+		.gate-keys {
+			display: none;
+		}
+
+		.gate-tap {
+			display: inline;
+		}
+	}
+
+	.gate-leaving {
+		animation: gate-out 0.7s var(--ease) both;
+		pointer-events: none;
+	}
+
+	@keyframes gate-in {
+		from {
+			opacity: 0;
+		}
+	}
+
+	@keyframes gate-out {
+		to {
+			opacity: 0;
+		}
+	}
+
+	@keyframes gate-breathe {
+		50% {
+			opacity: 0.45;
+		}
+	}
+
 	/* On, but the browser is holding the music until the first click or key. */
 	.music.waiting .bars {
 		animation: waiting 1.6s ease-in-out infinite;
@@ -231,7 +344,9 @@
 
 	@media (prefers-reduced-motion: reduce) {
 		.music.playing .bars i,
-		.music.waiting .bars {
+		.music.waiting .bars,
+		.gate,
+		.gate-prompt {
 			animation: none;
 		}
 	}
