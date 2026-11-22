@@ -73,8 +73,14 @@ const { previous, next } = neighbours('/projects');
 
 					<div class="pane-detail">
 						{
-							charms.map((charm) => (
-								<article class="detail" id={charm.id} data-detail={charm.id} aria-labelledby={`${charm.id}-name`}>
+							charms.map((charm, index) => (
+								<article
+									class="detail"
+									id={charm.id}
+									data-detail={charm.id}
+									data-hidden={index > 0 ? '' : undefined}
+									aria-labelledby={`${charm.id}-name`}
+								>
 									<h2 class="detail-name" id={`${charm.id}-name`}>
 										{charm.name}
 									</h2>
@@ -144,19 +150,28 @@ const { previous, next } = neighbours('/projects');
 <script>
 	// Choosing a medallion shows its project in the right-hand pane, as the
 	// game's inventory does; on narrow screens every project is shown in turn.
-	// Screens are swapped in by the ClientRouter, so this runs on each page load.
+	// The page arrives with only the first project showing, so the pane is right
+	// even before this runs.
+	//
+	// Screens are swapped in by the ClientRouter, so this is set up on each page
+	// load. It also sets up as soon as it runs: the router can fire
+	// astro:page-load before this inline script has run on the first visit, and
+	// the pane would then never be wired up.
 	const wide = matchMedia('(min-width: 960px)');
 
-	document.addEventListener('astro:page-load', () => {
+	const setUp = () => {
 		const list = document.querySelector<HTMLElement>('.charms');
 		const details = [...document.querySelectorAll<HTMLElement>('[data-detail]')];
-		if (!list || !details.length) return;
+		if (!list || !details.length || list.hasAttribute('data-ready')) return;
+		list.setAttribute('data-ready', '');
 
 		const show = (key: string | undefined) => {
 			for (const detail of details) detail.toggleAttribute('data-hidden', detail.dataset.detail !== key);
 		};
+		// Moving on to Back leaves the last project showing.
 		list.addEventListener('menuselect', (event) => {
-			show(((event as CustomEvent).detail as HTMLElement).dataset.key);
+			const key = ((event as CustomEvent).detail as HTMLElement).dataset.key;
+			if (key) show(key);
 		});
 		list.addEventListener('click', (event) => {
 			const link = (event.target as Element).closest('a');
@@ -164,7 +179,10 @@ const { previous, next } = neighbours('/projects');
 		});
 		const chosen = list.querySelector<HTMLElement>('[data-item][data-selected]') ?? list.querySelector<HTMLElement>('[data-item]');
 		show(chosen?.dataset.key);
-	});
+	};
+
+	setUp();
+	document.addEventListener('astro:page-load', setUp);
 </script>
 
 <style>
