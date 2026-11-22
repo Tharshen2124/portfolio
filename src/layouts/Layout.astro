@@ -9,6 +9,7 @@ import SiteHead, { type SeoProps } from '../components/SiteHead.astro';
 import Scene from '../components/game/Scene.astro';
 import Sprite from '../components/game/Sprite.astro';
 import Music from '../components/game/Music.astro';
+import StartScreen from '../components/game/StartScreen.astro';
 import '../styles/game.css';
 
 interface Props extends SeoProps {
@@ -33,6 +34,8 @@ const { scene = 'cavern', back, withEmblems = false, ...seo } = Astro.props;
 		<ClientRouter />
 	</head>
 	<body data-back={back}>
+		{/* First, so it covers the page before any of the site is drawn. */}
+		<StartScreen />
 		<a class="skip" href="#main">Skip to content</a>
 		<Sprite withEmblems={withEmblems} />
 		<Scene variant={scene} />

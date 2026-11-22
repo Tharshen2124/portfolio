@@ -1,0 +1,117 @@
+---
+/**
+ * The "press any key" start screen, as a game would show before its menus.
+ * Browsers only allow sound after a click, tap or key press, so it asks for
+ * one, and the music starts with it (Music.astro runs it).
+ *
+ * It's the first thing in the body, and the script just after it unhides it
+ * before anything else is drawn, so the site never shows before it. Until the
+ * browser says whether it will play the music, it's only a dark cover: the
+ * prompt appears if the browser holds the music back, and the cover fades away
+ * if it doesn't (a returning visitor, say). Visitors who switched the music
+ * off, or have no JavaScript, never see it.
+ *
+ * The ClientRouter doesn't run the script again on later screens, so it only
+ * covers the page the visitor arrived on.
+ */
+---
+
+<button type="button" class="gate" hidden aria-label="Begin, with music">
+	<span class="gate-prompt"><span class="gate-keys">Press any key</span><span class="gate-tap">Tap anywhere</span> to begin</span>
+</button>
+<script is:inline>
+	// 'game-music' is the music preference Music.astro remembers.
+	let off = false;
+	try {
+		off = localStorage.getItem('game-music') === 'off';
+	} catch {
+		// Private browsing: the music is on.
+	}
+	if (!off) document.currentScript.previousElementSibling.hidden = false;
+</script>
+
+<style>
+	.gate {
+		position: fixed;
+		inset: 0;
+		z-index: 200;
+		display: grid;
+		place-items: center;
+		width: 100%;
+		padding: var(--gutter);
+		border: 0;
+		background: radial-gradient(ellipse at center, rgba(3, 4, 6, 0.9), rgba(3, 4, 6, 0.97) 70%);
+		backdrop-filter: blur(10px);
+		color: var(--pale);
+		font-family: var(--font-carved);
+		font-weight: 500;
+		font-size: clamp(1.05rem, 0.85rem + 1vw, 1.6rem);
+		letter-spacing: 0.22em;
+		text-align: center;
+		cursor: pointer;
+	}
+
+	.gate[hidden] {
+		display: none;
+	}
+
+	.gate:focus {
+		outline: none;
+	}
+
+	/* No prompt until the browser has held the music back. */
+	.gate-prompt {
+		visibility: hidden;
+		text-shadow: var(--glow-text);
+	}
+
+	.gate-open .gate-prompt {
+		visibility: visible;
+		animation:
+			gate-in 0.6s var(--ease) both,
+			gate-breathe 2.6s ease-in-out 0.6s infinite;
+	}
+
+	.gate-tap {
+		display: none;
+	}
+
+	@media (hover: none) and (pointer: coarse) {
+		.gate-keys {
+			display: none;
+		}
+
+		.gate-tap {
+			display: inline;
+		}
+	}
+
+	.gate-leaving {
+		animation: gate-out 0.7s var(--ease) both;
+		pointer-events: none;
+	}
+
+	@keyframes gate-in {
+		from {
+			opacity: 0;
+		}
+	}
+
+	@keyframes gate-out {
+		to {
+			opacity: 0;
+		}
+	}
+
+	@keyframes gate-breathe {
+		50% {
+			opacity: 0.45;
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.gate-open .gate-prompt {
+			animation: none;
+		}
+	}
+</style>
