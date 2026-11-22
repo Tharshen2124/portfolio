@@ -60,10 +60,7 @@ const { previous, next } = neighbours('/projects');
 										<a class="charm-link" href={`#${charm.id}`}>
 											<span class="medal">
 												<Emblem name={charm.emblem} />
-												<Ornament name="bracket" class="medal-corner" />
-												<Ornament name="bracket" class="medal-corner" />
-												<Ornament name="bracket" class="medal-corner" />
-												<Ornament name="bracket" class="medal-corner" />
+												<Ornament name="medal-frame" class="medal-frame" />
 											</span>
 											<span class="charm-name">{charm.name}</span>
 											<span class="charm-year">{charm.year}</span>
@@ -370,42 +367,23 @@ const { previous, next } = neighbours('/projects');
 			filter 0.3s;
 	}
 
-	.medal > :global(.medal-corner) {
+	/*
+	 * The four brackets are one drawing, centred on the medallion, so they
+	 * always sit the same distance from it; choosing it draws them in close.
+	 */
+	.medal > :global(.medal-frame) {
 		position: absolute;
-		width: 38%;
+		top: 50%;
+		left: 50%;
+		width: calc(100% * 117 / 79);
 		height: auto;
 		color: var(--pale);
 		opacity: 0;
+		translate: -50% -50%;
+		scale: 1.1;
 		transition:
 			opacity 0.25s,
-			translate 0.3s var(--ease);
-	}
-
-	.medal > :global(.medal-corner:nth-of-type(2)) {
-		top: -24%;
-		left: -24%;
-		translate: -4px -4px;
-	}
-
-	.medal > :global(.medal-corner:nth-of-type(3)) {
-		top: -24%;
-		right: -24%;
-		transform: scaleX(-1);
-		translate: 4px -4px;
-	}
-
-	.medal > :global(.medal-corner:nth-of-type(4)) {
-		bottom: -24%;
-		left: -24%;
-		transform: scaleY(-1);
-		translate: -4px 4px;
-	}
-
-	.medal > :global(.medal-corner:nth-of-type(5)) {
-		bottom: -24%;
-		right: -24%;
-		transform: scale(-1);
-		translate: 4px 4px;
+			scale 0.3s var(--ease);
 	}
 
 	.charm[data-selected] .medal {
@@ -422,9 +400,9 @@ const { previous, next } = neighbours('/projects');
 		filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.7));
 	}
 
-	.charm[data-selected] .medal > :global(.medal-corner) {
+	.charm[data-selected] .medal > :global(.medal-frame) {
 		opacity: 1;
-		translate: 0 0;
+		scale: 1;
 	}
 
 	/* The detail pane. */
