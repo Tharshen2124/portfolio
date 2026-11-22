@@ -261,12 +261,21 @@ const description =
 			text-shadow 0.3s var(--ease);
 	}
 
+	/* A touch brighter than the other menus: with no box around the row, the words carry it. */
 	.feat[data-selected] .feat-title {
 		color: #fff;
-		text-shadow: var(--glow-lit);
+		text-shadow:
+			var(--glow-lit),
+			0 0 32px rgba(174, 191, 255, 0.3);
 	}
 
-	.feat[data-selected] :is(.feat-org, .feat-summary) {
+	.feat[data-selected] .feat-org {
+		text-shadow:
+			0 0 16px rgba(255, 255, 255, 0.36),
+			0 0 2px rgba(255, 255, 255, 0.5);
+	}
+
+	.feat[data-selected] .feat-summary {
 		text-shadow: var(--glow-text);
 	}
 
@@ -294,13 +303,12 @@ const description =
 		inset: -0.5rem -0.75rem;
 	}
 
+	/*
+	 * No box when the arrow keys reach a row: focusing it selects it, so the lit
+	 * medallion and glowing words already mark it, as on the other menus.
+	 */
 	.feat-link:focus-visible {
 		outline: none;
-	}
-
-	.feat:has(.feat-link:focus-visible) {
-		outline: 1px solid rgba(243, 240, 232, 0.5);
-		outline-offset: 0.6rem;
 	}
 
 	.feat-org {
