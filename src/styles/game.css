@@ -13,9 +13,9 @@
 	--cream: #ede3cb;
 	--soul: #aebfff;
 	--hair: rgba(243, 240, 232, 0.92);
-	--band-a: rgba(24, 40, 108, 0.94);
-	--band-b: rgba(46, 72, 162, 0.72);
 	--glow-text: 0 0 16px rgba(255, 255, 255, 0.26), 0 0 2px rgba(255, 255, 255, 0.4);
+	/* Lit: the item under the cursor, or the one the arrow keys have reached. */
+	--glow-lit: 0 0 20px rgba(255, 255, 255, 0.55), 0 0 8px rgba(255, 255, 255, 0.35), 0 0 2px rgba(255, 255, 255, 0.7);
 	--glow-ink: drop-shadow(0 0 4px rgba(255, 255, 255, 0.5));
 	--ease: cubic-bezier(0.22, 0.61, 0.36, 1);
 	--gutter: clamp(1.25rem, 4vw, 3rem);
@@ -96,12 +96,17 @@ a {
 	z-index: 1;
 }
 
-/* Ornaments: inked in the text colour, with a faint glow. */
+/*
+ * Ornaments: inked in the text colour, with a faint glow. They're only
+ * drawings, so the cursor passes through them: a hidden pointer beside an
+ * item mustn't light it up from across the gap.
+ */
 .orn {
 	display: block;
 	fill: currentColor;
 	filter: var(--glow-ink);
 	overflow: visible;
+	pointer-events: none;
 }
 
 .carved {
@@ -217,9 +222,7 @@ a {
 .menu-item[data-selected],
 .menu-item:hover {
 	color: #fff;
-	text-shadow:
-		0 0 18px rgba(255, 255, 255, 0.45),
-		0 0 2px rgba(255, 255, 255, 0.6);
+	text-shadow: var(--glow-lit);
 }
 
 /* A key to press, as the game prints it. */
@@ -263,11 +266,14 @@ a {
 	color: var(--pale);
 	font-size: clamp(1.05rem, 0.95rem + 0.35vw, 1.3rem);
 	text-decoration: none;
-	transition: text-shadow 0.2s;
+	transition:
+		color 0.2s,
+		text-shadow 0.2s;
 }
 
 .tab:hover {
-	text-shadow: var(--glow-text);
+	color: #fff;
+	text-shadow: var(--glow-lit);
 }
 
 .tab-glyph {
@@ -312,11 +318,11 @@ a {
 	}
 }
 
-/* Moving between screens fades through black, where browsers support it. */
-@view-transition {
-	navigation: auto;
-}
-
+/*
+ * Moving between screens fades through black, where browsers support it. The
+ * ClientRouter runs these transitions; the original design has no router, so
+ * going there is a plain page load.
+ */
 ::view-transition-old(root) {
 	animation: 0.26s ease-in both fade-out;
 }
@@ -338,7 +344,8 @@ a {
 }
 
 @media (prefers-reduced-motion: reduce) {
-	@view-transition {
-		navigation: none;
+	::view-transition-old(root),
+	::view-transition-new(root) {
+		animation: none;
 	}
 }

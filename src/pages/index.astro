@@ -26,8 +26,9 @@ const socials = [
 ---
 
 <Layout description={description} type="profile" jsonLd={jsonLd} scene="title">
-	<script is:inline>
+	<script is:inline data-astro-rerun>
 		// After the first visit this session, the title appears without the long fade.
+		// (Rerun on every visit: the router would otherwise run it only once.)
 		try {
 			if (sessionStorage.getItem('title-seen')) document.documentElement.dataset.revisit = '';
 			sessionStorage.setItem('title-seen', '1');
@@ -47,7 +48,8 @@ const socials = [
 		<nav class="main-menu" aria-label="Main menu" data-enter style="--delay: 700">
 			<ul class="menu" data-menu data-keys>
 				<li>
-					<MenuLink href={originalPath('/')}>Original Site (For HRs)</MenuLink>
+					{/* A full page load: the original design has no music, so it stops here. */}
+					<MenuLink href={originalPath('/')} data-astro-reload>Original Site (For HRs)</MenuLink>
 				</li>
 				{
 					sections.map(({ path, label }) => (
@@ -184,7 +186,7 @@ const socials = [
 
 	.socials a:hover {
 		color: #fff;
-		text-shadow: var(--glow-text);
+		text-shadow: var(--glow-lit);
 	}
 
 	:global(html[data-revisit]) [data-enter] {

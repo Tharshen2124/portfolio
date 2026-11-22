@@ -28,3 +28,5 @@ docs/
 
 # wrangler
 .wrangler/
+
+.agents

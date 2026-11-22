@@ -96,9 +96,6 @@ const { previous, next } = neighbours('/projects');
 											))}
 										</ul>
 									</div>
-									<span class="medal medal-large" aria-hidden="true">
-										<Emblem name={charm.emblem} />
-									</span>
 									<p class="detail-summary">{charm.summary}</p>
 									<ul class="actions">
 										<li>
@@ -150,11 +147,14 @@ const { previous, next } = neighbours('/projects');
 <script>
 	// Choosing a medallion shows its project in the right-hand pane, as the
 	// game's inventory does; on narrow screens every project is shown in turn.
-	const list = document.querySelector<HTMLElement>('.charms');
-	const details = [...document.querySelectorAll<HTMLElement>('[data-detail]')];
+	// Screens are swapped in by the ClientRouter, so this runs on each page load.
 	const wide = matchMedia('(min-width: 960px)');
 
-	if (list && details.length) {
+	document.addEventListener('astro:page-load', () => {
+		const list = document.querySelector<HTMLElement>('.charms');
+		const details = [...document.querySelectorAll<HTMLElement>('[data-detail]')];
+		if (!list || !details.length) return;
+
 		const show = (key: string | undefined) => {
 			for (const detail of details) detail.toggleAttribute('data-hidden', detail.dataset.detail !== key);
 		};
@@ -167,7 +167,7 @@ const { previous, next } = neighbours('/projects');
 		});
 		const chosen = list.querySelector<HTMLElement>('[data-item][data-selected]') ?? list.querySelector<HTMLElement>('[data-item]');
 		show(chosen?.dataset.key);
-	}
+	});
 </script>
 
 <style>
@@ -298,7 +298,6 @@ const { previous, next } = neighbours('/projects');
 	}
 
 	.charm-link {
-		position: relative;
 		display: grid;
 		grid-template-columns: auto minmax(0, 1fr) auto;
 		align-items: center;
@@ -307,34 +306,7 @@ const { previous, next } = neighbours('/projects');
 		padding: 0.7rem 1rem 0.7rem 0.75rem;
 		color: var(--soft);
 		text-decoration: none;
-		transition: color 0.25s;
-	}
-
-	/* The chosen row: a darker band edged with hairlines, as in a shop list. */
-	.charm-link::before {
-		content: '';
-		position: absolute;
-		inset: 0;
-		z-index: -1;
-		background:
-			linear-gradient(to right, transparent, rgba(243, 240, 232, 0.55) 30%, rgba(243, 240, 232, 0.55) 70%, transparent) top / 100% 1px no-repeat,
-			linear-gradient(to right, transparent, rgba(243, 240, 232, 0.55) 30%, rgba(243, 240, 232, 0.55) 70%, transparent) bottom / 100% 1px no-repeat,
-			linear-gradient(to right, transparent, rgba(120, 140, 200, 0.14) 25%, rgba(120, 140, 200, 0.14) 75%, transparent);
-		opacity: 0;
-		transition: opacity 0.3s;
-	}
-
-	.charm {
-		position: relative;
-		isolation: isolate;
-	}
-
-	.charm[data-selected] .charm-link {
-		color: #fff;
-	}
-
-	.charm[data-selected] .charm-link::before {
-		opacity: 1;
+		transition: color 0.3s var(--ease);
 	}
 
 	.charm-link:focus-visible {
@@ -347,13 +319,30 @@ const { previous, next } = neighbours('/projects');
 		text-wrap: balance;
 	}
 
-	.charm[data-selected] .charm-name {
-		text-shadow: var(--glow-text);
+	.charm-name,
+	.charm-year {
+		transition:
+			color 0.3s var(--ease),
+			text-shadow 0.3s var(--ease);
 	}
 
 	.charm-year {
 		font-size: 1rem;
 		color: var(--dim);
+	}
+
+	/* The chosen row's words glow, beside its bracketed medallion. */
+	.charm[data-selected] .charm-link {
+		color: #fff;
+	}
+
+	.charm[data-selected] .charm-name {
+		text-shadow: var(--glow-lit);
+	}
+
+	.charm[data-selected] .charm-year {
+		color: var(--soft);
+		text-shadow: var(--glow-text);
 	}
 
 	/* Medallions: an emblem in a ringed disc; the chosen one bracketed and lit. */
@@ -508,28 +497,11 @@ const { previous, next } = neighbours('/projects');
 		fill: var(--pale);
 	}
 
-	.medal-large {
-		width: clamp(5rem, 4rem + 2.5vw, 6.5rem);
-		margin: 1.25rem 0 0.25rem;
-		box-shadow:
-			0 0 0 2px rgba(255, 255, 255, 0.9),
-			0 0 0 6px rgba(3, 4, 6, 0.9),
-			0 0 0 7px rgba(243, 240, 232, 0.3),
-			0 0 34px rgba(120, 150, 255, 0.4),
-			inset 0 0 18px rgba(120, 150, 255, 0.3);
-	}
-
-	.medal-large > :global(.emblem) {
-		color: #fff;
-		filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.6));
-	}
-
 	.detail-summary {
 		max-width: 34rem;
-		margin: 1rem 0 0;
+		margin: 1.5rem 0 0;
 		font-size: clamp(1.08rem, 1rem + 0.25vw, 1.22rem);
 		line-height: 1.55;
-		text-align: left;
 		text-wrap: pretty;
 	}
 
@@ -547,9 +519,26 @@ const { previous, next } = neighbours('/projects');
 		font-size: clamp(1rem, 0.9rem + 0.35vw, 1.2rem);
 	}
 
+	/*
+	 * Every project sits in the same spot and only the chosen one shows, so the
+	 * pane is always as tall as the longest and nothing below it moves.
+	 */
 	@media (min-width: 960px) {
+		.pane-detail {
+			display: grid;
+			align-items: start;
+		}
+
+		.detail {
+			grid-area: 1 / 1;
+		}
+
+		.detail + .detail {
+			margin-top: 0;
+		}
+
 		.detail[data-hidden] {
-			display: none;
+			visibility: hidden;
 		}
 	}
 

@@ -4,9 +4,11 @@
  * a misty underground scene. (The original, plain design is OriginalLayout.)
  */
 import { Font } from 'astro:assets';
+import { ClientRouter } from 'astro:transitions';
 import SiteHead, { type SeoProps } from '../components/SiteHead.astro';
 import Scene from '../components/game/Scene.astro';
 import Sprite from '../components/game/Sprite.astro';
+import Music from '../components/game/Music.astro';
 import '../styles/game.css';
 
 interface Props extends SeoProps {
@@ -27,16 +29,21 @@ const { scene = 'cavern', back, withEmblems = false, ...seo } = Astro.props;
 		<SiteHead {...seo} themeColor="#030406" />
 		<Font cssVariable="--font-carved" preload />
 		<Font cssVariable="--font-book" preload={[{ style: 'normal' }]} />
+		{/* Screens change without a full page load, so the music plays straight through. */}
+		<ClientRouter />
 	</head>
 	<body data-back={back}>
 		<a class="skip" href="#main">Skip to content</a>
 		<Sprite withEmblems={withEmblems} />
 		<Scene variant={scene} />
+		<Music />
 		<slot />
 	</body>
 </html>
 
 <script>
+	import { navigate } from 'astro:transitions/client';
+
 	// Menus work like the game's: hovering or focusing an item selects it, the
 	// arrow keys move the selection and Enter follows it. Escape goes back, and
 	// the left and right arrows step to the neighbouring screens.
@@ -45,25 +52,28 @@ const { scene = 'cavern', back, withEmblems = false, ...seo } = Astro.props;
 	const linkOf = (item: Element) =>
 		(item.matches('a') ? item : item.querySelector('a')) as HTMLAnchorElement | null;
 
-	for (const menu of document.querySelectorAll<HTMLElement>('[data-menu]')) {
-		const items = [...menu.querySelectorAll<HTMLElement>('[data-item]')];
-		const select = (item: HTMLElement) => {
-			if (item.hasAttribute('data-selected')) return;
-			for (const other of items) other.toggleAttribute('data-selected', other === item);
-			menu.dispatchEvent(new CustomEvent('menuselect', { detail: item }));
-		};
-		for (const item of items) {
-			item.addEventListener('pointerenter', (event) => {
-				if (event.pointerType === 'mouse') select(item);
-			});
-			item.addEventListener('focusin', () => select(item));
+	// Each screen is swapped in by the ClientRouter, so its menus are set up on every page load.
+	document.addEventListener('astro:page-load', () => {
+		for (const menu of document.querySelectorAll<HTMLElement>('[data-menu]')) {
+			const items = [...menu.querySelectorAll<HTMLElement>('[data-item]')];
+			const select = (item: HTMLElement) => {
+				if (item.hasAttribute('data-selected')) return;
+				for (const other of items) other.toggleAttribute('data-selected', other === item);
+				menu.dispatchEvent(new CustomEvent('menuselect', { detail: item }));
+			};
+			for (const item of items) {
+				item.addEventListener('pointerenter', (event) => {
+					if (event.pointerType === 'mouse') select(item);
+				});
+				item.addEventListener('focusin', () => select(item));
+			}
+			const first = items.find((item) => item.hasAttribute('data-selected')) ?? items[0];
+			if (first) {
+				first.removeAttribute('data-selected');
+				select(first);
+			}
 		}
-		const first = items.find((item) => item.hasAttribute('data-selected')) ?? items[0];
-		if (first) {
-			first.removeAttribute('data-selected');
-			select(first);
-		}
-	}
+	});
 
 	document.addEventListener('keydown', (event) => {
 		if (event.defaultPrevented || event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
@@ -82,7 +92,7 @@ const { scene = 'cavern', back, withEmblems = false, ...seo } = Astro.props;
 		} else if (event.key === 'Enter' && target === document.body && current >= 0) {
 			linkOf(items[current])?.click();
 		} else if (event.key === 'Escape' && document.body.dataset.back) {
-			window.location.href = document.body.dataset.back;
+			navigate(document.body.dataset.back);
 		} else if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
 			document.querySelector<HTMLAnchorElement>(`[data-key="${event.key}"]`)?.click();
 		}

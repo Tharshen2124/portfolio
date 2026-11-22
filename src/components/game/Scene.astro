@@ -99,10 +99,20 @@ for (const [from, to] of [
 		dark: boolean;
 	};
 
-	const canvas = document.querySelector<HTMLCanvasElement>('.scene-motes');
-	const context = canvas?.getContext('2d');
+	// Every screen brings its own scene, so the motes start on each page load and
+	// stop before the next screen is swapped in.
+	let stop = () => {};
+	document.addEventListener('astro:before-swap', () => stop());
+	document.addEventListener('astro:page-load', () => {
+		stop();
+		stop = start();
+	});
 
-	if (canvas && context) {
+	function start() {
+		const canvas = document.querySelector<HTMLCanvasElement>('.scene-motes');
+		const context = canvas?.getContext('2d');
+		if (!canvas || !context) return () => {};
+
 		const title = canvas.dataset.variant === 'title';
 		const still = matchMedia('(prefers-reduced-motion: reduce)');
 		let width = 0;
@@ -178,21 +188,31 @@ for (const [from, to] of [
 			frame = requestAnimationFrame(loop);
 		};
 
-		const start = () => {
+		const run = () => {
 			cancelAnimationFrame(frame);
 			last = 0;
 			if (still.matches || document.hidden) draw(0);
 			else frame = requestAnimationFrame(loop);
 		};
 
+		const listening = new AbortController();
+		const { signal } = listening;
 		resize();
-		start();
-		window.addEventListener('resize', () => {
-			resize();
-			start();
-		});
-		document.addEventListener('visibilitychange', start);
-		still.addEventListener('change', start);
+		run();
+		window.addEventListener(
+			'resize',
+			() => {
+				resize();
+				run();
+			},
+			{ signal },
+		);
+		document.addEventListener('visibilitychange', run, { signal });
+		still.addEventListener('change', run, { signal });
+		return () => {
+			listening.abort();
+			cancelAnimationFrame(frame);
+		};
 	}
 </script>
 
