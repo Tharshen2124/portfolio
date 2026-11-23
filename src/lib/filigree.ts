@@ -9,7 +9,7 @@
 
 export type Pt = readonly [number, number];
 /** Stroke width at a point `t` (0 to 1) along the stroke. */
-export type Width = (t: number) => number;
+type Width = (t: number) => number;
 
 const rad = (deg: number) => (deg * Math.PI) / 180;
 const ease = (x: number) => 0.5 - Math.cos(Math.PI * Math.min(1, Math.max(0, x))) / 2;
@@ -143,7 +143,7 @@ export function ring(centre: Pt, r: number, width: number, steps = 64): Pt[] {
 	return ink(circle, even(width));
 }
 
-export const lerpPt = (a: Pt, b: Pt, t: number): Pt => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
+const lerpPt = (a: Pt, b: Pt, t: number): Pt => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
 
 /** Reflects shapes across the vertical line x = `axis`. */
 export function mirrorX(shapes: Pt[][], axis: number): Pt[][] {

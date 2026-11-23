@@ -1,19 +1,10 @@
 ---
 /** A screen's title in carved capitals, over its inked rule. */
 import Ornament from './Ornament.astro';
-
-interface Props {
-	/** Heading level; the screen's main title is the h1. */
-	level?: 1 | 2;
-	id?: string;
-}
-
-const { level = 1, id } = Astro.props;
-const Heading = `h${level}` as const;
 ---
 
 <header class="screen-head" data-enter>
-	<Heading class="screen-title" id={id}><slot /></Heading>
+	<h1 class="screen-title"><slot /></h1>
 	<div class="rule"><Ornament name="divider" /></div>
 </header>
 
