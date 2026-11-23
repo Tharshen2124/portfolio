@@ -1,13 +1,13 @@
 import { site } from '../data/site';
 
-export interface SubstackPost {
+interface SubstackPost {
 	title: string;
 	url: string;
 	date: Date;
 	description?: string;
 }
 
-export interface SubstackFeed {
+interface SubstackFeed {
 	description?: string;
 	posts: SubstackPost[];
 }

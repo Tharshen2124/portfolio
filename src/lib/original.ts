@@ -1,5 +1,5 @@
 /** Where the original, plain design of the site lives. */
-export const ORIGINAL_BASE = '/original';
+const ORIGINAL_BASE = '/original';
 
 /** The original design's copy of a site path: `/experience/x` becomes `/original/experience/x`. */
 export function originalPath(path: string): string {
