@@ -14,13 +14,15 @@
  * tries to start: if the browser holds it back, the screen asks for a key
  * press, and the music starts with it; if not, the screen clears away.
  */
+// Imported rather than kept in public/, so the file is fingerprinted and cached for good.
+import soundtrack from '../../assets/medieval-background.m4a?url';
 ---
 
 <button type="button" class="music" aria-pressed="true" aria-label="Music" title="Music" transition:persist="music-toggle">
 	<span class="bars" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
 	<span class="music-label">Music</span>
 </button>
-<audio class="soundtrack" src="/audio/medieval-background.m4a" loop preload="none" transition:persist="soundtrack"></audio>
+<audio class="soundtrack" src={soundtrack} loop preload="none" transition:persist="soundtrack"></audio>
 
 <script>
 	const PREF = 'game-music';
@@ -176,7 +178,6 @@
 		const on = !enabled();
 		write(() => localStorage, PREF, on ? 'on' : 'off');
 		sync();
-		(window as { posthog?: { capture: (event: string, props: object) => void } }).posthog?.capture('music_toggled', { on });
 	});
 
 	// Quiet while the tab is in the background, and picked up again when Back
@@ -235,16 +236,19 @@
 		filter: var(--glow-ink);
 	}
 
+	/* Full height, scaled down from the foot: scaling skips the layout a changing height costs every frame. */
 	.bars i {
 		width: 2px;
-		height: 20%;
+		height: 100%;
 		border-radius: 1px;
 		background: currentColor;
-		transition: height 0.3s;
+		transform: scaleY(0.2);
+		transform-origin: bottom;
+		transition: transform 0.3s;
 	}
 
 	.music[aria-pressed='true'] .bars i {
-		height: 55%;
+		transform: scaleY(0.55);
 	}
 
 	.music.playing .bars i {
@@ -268,11 +272,11 @@
 
 	@keyframes level {
 		from {
-			height: 20%;
+			transform: scaleY(0.2);
 		}
 
 		to {
-			height: 100%;
+			transform: none;
 		}
 	}
 

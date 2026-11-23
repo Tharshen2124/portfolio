@@ -32,7 +32,7 @@ const charms = projects.map(({ id, data }) => ({
 const { previous, next } = neighbours('/projects');
 ---
 
-<Layout title="Projects" description={projectsDescription} jsonLd={projectsSchema(projects)} back="/" withEmblems>
+<Layout title="Projects" description={projectsDescription} jsonLd={projectsSchema(projects)} back="/">
 	<div class="screen">
 		<Tabs current="/projects" />
 		<main id="main" class="inventory">
@@ -107,7 +107,6 @@ const { previous, next } = neighbours('/projects');
 												target="_blank"
 												rel="noopener noreferrer"
 												item={false}
-												data-posthog-project-repository={charm.name}
 											>
 												Repository <span aria-hidden="true">↗</span>
 											</MenuLink>
@@ -119,7 +118,6 @@ const { previous, next } = neighbours('/projects');
 													target="_blank"
 													rel="noopener noreferrer"
 													item={false}
-													data-posthog-project-live-site={charm.name}
 												>
 													Live Site <span aria-hidden="true">↗</span>
 												</MenuLink>

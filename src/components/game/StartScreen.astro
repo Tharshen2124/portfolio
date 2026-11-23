@@ -40,8 +40,10 @@
 		width: 100%;
 		padding: var(--gutter);
 		border: 0;
-		background: radial-gradient(ellipse at center, rgba(3, 4, 6, 0.9), rgba(3, 4, 6, 0.97) 70%);
-		backdrop-filter: blur(10px);
+		/* Opaque, in the colours the dimmed scene shows through at, rather than a
+		   see-through cover with a backdrop blur: re-blurring the moving scene behind
+		   it every frame is heavy work for a phone. The page still paints beneath. */
+		background: radial-gradient(ellipse at center, #0a0b0e, #040507 70%);
 		color: var(--pale);
 		font-family: var(--font-carved);
 		font-weight: 500;
