@@ -53,7 +53,7 @@ const jsonLd = graph(
 						{posts.map((post) => (
 							<li class="post" data-item>
 								<h2 class="post-title">
-									<a class="post-link" href={post.url} target="_blank" rel="noopener noreferrer" data-posthog-blog-link="post_list">
+									<a class="post-link" href={post.url} target="_blank" rel="noopener noreferrer">
 										{post.title}
 									</a>
 								</h2>
@@ -75,7 +75,6 @@ const jsonLd = graph(
 					target="_blank"
 					rel="noopener noreferrer"
 					item={posts.length === 0}
-					data-posthog-blog-link="substack_more"
 				>
 					{posts.length > 0 ? 'More on Substack' : 'Read on Substack'}&nbsp;<span aria-hidden="true">↗</span>
 				</MenuLink>

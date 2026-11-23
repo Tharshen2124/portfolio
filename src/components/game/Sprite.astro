@@ -1,34 +1,36 @@
 ---
 /**
- * Each ornament (and, where asked, each emblem) defined once per page, so the
- * many pointers and frames on a screen reuse one drawing.
+ * Each ornament and emblem the page uses, defined once, so the many pointers
+ * and frames on a screen reuse one drawing. Only the ones the page refers to
+ * are included: the whole set is several times the size of a page's text.
  */
 import { ornaments } from '../../lib/ornaments';
 import { emblems } from '../../lib/emblems';
 
 interface Props {
-	/** Also define the emblems, for screens with medallions and badges. */
-	withEmblems?: boolean;
+	/** Symbol ids the page refers to, such as `orn-pointer` or `emb-crown`. */
+	used: ReadonlySet<string>;
 }
 
-const { withEmblems = false } = Astro.props;
+const { used } = Astro.props;
+const pick = <T,>(set: Record<string, T>, prefix: string) =>
+	Object.entries(set).filter(([name]) => used.has(`${prefix}-${name}`));
 ---
 
 <svg width="0" height="0" class="sprite" aria-hidden="true" focusable="false">
 	{
-		Object.entries(ornaments).map(([name, { width, height, d }]) => (
+		pick(ornaments, 'orn').map(([name, { width, height, d }]) => (
 			<symbol id={`orn-${name}`} viewBox={`0 0 ${width} ${height}`}>
 				<path d={d} />
 			</symbol>
 		))
 	}
 	{
-		withEmblems &&
-			Object.entries(emblems).map(([name, d]) => (
-				<symbol id={`emb-${name}`} viewBox="0 0 48 48">
-					<path d={d} />
-				</symbol>
-			))
+		pick(emblems, 'emb').map(([name, d]) => (
+			<symbol id={`emb-${name}`} viewBox="0 0 48 48">
+				<path d={d} />
+			</symbol>
+		))
 	}
 </svg>
 

@@ -39,9 +39,9 @@ const jsonLd = graph(
 
 			<ul class="menu social-menu" data-menu data-keys data-enter style="--delay: 350">
 				{
-					socials.map(({ id, name, handle, href }) => (
+					socials.map(({ name, handle, href }) => (
 						<li>
-							<MenuLink href={href} target="_blank" rel="noopener noreferrer" data-posthog-social-profile={id}>
+							<MenuLink href={href} target="_blank" rel="noopener noreferrer">
 								<span class="social-name">{name}</span>
 								<span class="social-handle">
 									{handle}&nbsp;<span aria-hidden="true">↗</span>

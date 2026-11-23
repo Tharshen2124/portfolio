@@ -17,11 +17,14 @@ interface Props extends SeoProps {
 	scene?: 'title' | 'cavern';
 	/** Where Escape leads: the screen this one was opened from. */
 	back?: string;
-	/** Define the emblems too, for screens with medallions and badges. */
-	withEmblems?: boolean;
 }
 
-const { scene = 'cavern', back, withEmblems = false, ...seo } = Astro.props;
+const { scene = 'cavern', back, ...seo } = Astro.props;
+
+// The screen is drawn first, so the sprite can carry just the ornaments and
+// emblems it refers to rather than the whole set.
+const page = await Astro.slots.render('default');
+const used = new Set(Array.from(page.matchAll(/href="#((?:orn|emb)-[\w-]+)"/g), (match) => match[1]));
 ---
 
 <!doctype html>
@@ -38,10 +41,10 @@ const { scene = 'cavern', back, withEmblems = false, ...seo } = Astro.props;
 		{/* First, so it covers the page before any of the site is drawn. */}
 		<StartScreen />
 		<a class="skip" href="#main">Skip to content</a>
-		<Sprite withEmblems={withEmblems} />
+		<Sprite used={used} />
 		<Scene variant={scene} />
 		<Music />
-		<slot />
+		<Fragment set:html={page} />
 	</body>
 </html>
 
@@ -51,8 +54,6 @@ const { scene = 'cavern', back, withEmblems = false, ...seo } = Astro.props;
 	// Menus work like the game's: hovering or focusing an item selects it, the
 	// arrow keys move the selection and Enter follows it. Escape goes back, and
 	// the left and right arrows step to the neighbouring screens.
-	type Track = (el: HTMLElement) => void;
-
 	const linkOf = (item: Element) =>
 		(item.matches('a') ? item : item.querySelector('a')) as HTMLAnchorElement | null;
 
@@ -105,48 +106,6 @@ const { scene = 'cavern', back, withEmblems = false, ...seo } = Astro.props;
 			navigate(document.body.dataset.back);
 		} else if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
 			document.querySelector<HTMLAnchorElement>(`[data-key="${event.key}"]`)?.click();
-		}
-	});
-
-	// Link analytics, matching the events the original design records.
-	type PostHog = {
-		capture: (event: string, props: Record<string, string | undefined>) => void;
-		logger?: { info: (message: string, props: Record<string, string | undefined>) => void };
-	};
-	const posthog = () => (window as { posthog?: PostHog }).posthog;
-	const tracked: [string, Track][] = [
-		['[data-posthog-social-profile]', (el) => posthog()?.capture('social_profile_opened', { profile: el.dataset.posthogSocialProfile })],
-		[
-			'[data-posthog-project-repository]',
-			(el) => {
-				const props = { project_name: el.dataset.posthogProjectRepository };
-				posthog()?.capture('project_repository_opened', props);
-				posthog()?.logger?.info('portfolio project repository opened', props);
-			},
-		],
-		[
-			'[data-posthog-project-live-site]',
-			(el) => {
-				const props = { project_name: el.dataset.posthogProjectLiveSite };
-				posthog()?.capture('project_live_site_opened', props);
-				posthog()?.logger?.info('portfolio project live site opened', props);
-			},
-		],
-		[
-			'[data-posthog-blog-link]',
-			(el) => {
-				const props = { link_location: el.dataset.posthogBlogLink };
-				posthog()?.capture('blog_opened', props);
-				posthog()?.logger?.info('portfolio blog opened', props);
-			},
-		],
-		['[data-posthog-experience-resource]', () => posthog()?.capture('experience_resource_opened', { link_location: 'article_footer' })],
-	];
-	document.addEventListener('click', (event) => {
-		if (!(event.target instanceof Element)) return;
-		for (const [selector, send] of tracked) {
-			const el = event.target.closest<HTMLElement>(selector);
-			if (el) send(el);
 		}
 	});
 </script>

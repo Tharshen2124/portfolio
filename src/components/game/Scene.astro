@@ -153,7 +153,10 @@ for (const [from, to] of [
 		};
 
 		const resize = () => {
-			const ratio = Math.min(window.devicePixelRatio || 1, 2);
+			// One canvas pixel per CSS pixel, even on sharp screens: the motes are soft
+			// glows, so extra resolution doesn't show, and a 2x canvas is four times the
+			// pixels to clear and repaint every frame.
+			const ratio = 1;
 			width = window.innerWidth;
 			height = window.innerHeight;
 			canvas.width = Math.round(width * ratio);

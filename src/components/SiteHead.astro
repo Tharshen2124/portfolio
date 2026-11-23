@@ -1,5 +1,4 @@
 ---
-import PostHog from './posthog.astro';
 import { site } from '../data/site';
 import { absoluteUrl, defaultImage, pagePath, type JsonLd } from '../lib/seo';
 
@@ -89,4 +88,3 @@ const image = await defaultImage();
 />
 {markdownUrl && <link rel="alternate" type="text/markdown" href={markdownUrl} />}
 {jsonLd && <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />}
-<PostHog />

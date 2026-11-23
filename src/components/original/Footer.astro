@@ -17,7 +17,6 @@ const links = [
 						href={href}
 						target="_blank"
 						rel="noopener noreferrer"
-						data-posthog-social-profile={label}
 					>
 						<svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
 							<path
@@ -33,16 +32,6 @@ const links = [
 	</ul>
 	<p>© {new Date().getFullYear()} {site.name}</p>
 </footer>
-
-<script is:inline>
-	document.querySelectorAll('[data-posthog-social-profile]').forEach((link) => {
-		link.addEventListener('click', () => {
-			window.posthog?.capture('social_profile_opened', {
-				profile: link.dataset.posthogSocialProfile,
-			});
-		});
-	});
-</script>
 
 <style>
 	footer {

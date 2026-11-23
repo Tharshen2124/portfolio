@@ -31,7 +31,6 @@ const projects = await getProjects();
 							href={data.repo}
 							target="_blank"
 							rel="noopener noreferrer"
-							data-posthog-project-repository={data.name}
 						>
 							{data.name}
 						</a>
@@ -44,7 +43,6 @@ const projects = await getProjects();
 							href={data.repo}
 							target="_blank"
 							rel="noopener noreferrer"
-							data-posthog-project-repository={data.name}
 						>
 							repository ↗
 						</a>
@@ -54,7 +52,6 @@ const projects = await getProjects();
 								href={data.site}
 								target="_blank"
 								rel="noopener noreferrer"
-								data-posthog-project-live-site={data.name}
 							>
 								live site ↗
 							</a>
@@ -70,30 +67,6 @@ const projects = await getProjects();
 		}
 	</ul>
 </Layout>
-
-<script is:inline>
-	document.querySelectorAll('[data-posthog-project-repository]').forEach((link) => {
-		link.addEventListener('click', () => {
-			window.posthog?.capture('project_repository_opened', {
-				project_name: link.dataset.posthogProjectRepository,
-			});
-			window.posthog?.logger?.info('portfolio project repository opened', {
-				project_name: link.dataset.posthogProjectRepository,
-			});
-		});
-	});
-
-	document.querySelectorAll('[data-posthog-project-live-site]').forEach((link) => {
-		link.addEventListener('click', () => {
-			window.posthog?.capture('project_live_site_opened', {
-				project_name: link.dataset.posthogProjectLiveSite,
-			});
-			window.posthog?.logger?.info('portfolio project live site opened', {
-				project_name: link.dataset.posthogProjectLiveSite,
-			});
-		});
-	});
-</script>
 
 <style>
 	.projects {
